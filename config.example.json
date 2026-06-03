@@ -1,0 +1,18 @@
+{
+  "language": "it",
+  "google_api_key": "YOUR_GOOGLE_PLACES_API_KEY",
+  "categories": ["Dentist", "Gym", "Lawyer"],
+  "cities": ["Milan", "Rome"],
+  "countries": ["Italy"],
+  "results_per_run": 10,
+  "schedule": "0 8 * * *",
+  "output_dir": "results",
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "user": "your@email.com",
+    "pass": "your_app_password"
+  },
+  "email_to": ["recipient@email.com"],
+  "email_template": "templates/email.html"
+}

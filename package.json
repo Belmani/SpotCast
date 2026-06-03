@@ -1,0 +1,35 @@
+{
+  "name": "spotcast",
+  "version": "0.1.0",
+  "description": "Automated local business discovery via Google Maps",
+  "author": "Alessandro De Prato & Gabriela Belmani",
+  "license": "MIT",
+  "main": "dist/SpotCast.js",
+  "scripts": {
+    "dev": "nodemon",
+    "build": "tsc",
+    "start": "node dist/SpotCast.js",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "@types/handlebars": "^4.0.40",
+    "@types/node": "^25.9.1",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^8.0.0",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "handlebars": "^4.7.9",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.10",
+    "winston": "^3.19.0",
+    "zod": "^4.4.3"
+  }
+}

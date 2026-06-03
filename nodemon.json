@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": ["src/**/*.spec.ts", "results/", "tests/"],
+  "exec": "ts-node src/SpotCast.ts"
+}

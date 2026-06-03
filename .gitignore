@@ -1,0 +1,7 @@
+node_modules/
+dist/
+config.json
+seen_firms.json
+tracker.log
+results/
+.env
