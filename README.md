@@ -1,5 +1,10 @@
 # SpotCast 🎯
 
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-green)
+![pnpm](https://img.shields.io/badge/pnpm-10.30.2-orange)
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
+
 > Automated local business discovery — find new leads on Google Maps every morning, delivered straight to your inbox.
 
 ---
