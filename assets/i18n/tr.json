@@ -1,0 +1,37 @@
+{
+  "sheet_businesses":        "İşletmeler",
+  "col_place_id":            "Yer Kimliği",
+  "col_name":                "İşletme Adı",
+  "col_category":            "Kategori",
+  "col_city":                "Şehir",
+  "col_country":             "Ülke",
+  "col_address":             "Adres",
+  "col_phone":               "Telefon",
+  "col_website":             "Web Sitesi",
+  "col_rating":              "Puan",
+  "col_review_count":        "Değerlendirme",
+  "col_maps_url":            "Harita Bağlantısı",
+  "col_first_seen":          "İlk Görülme",
+
+  "sheet_email_templates":   "E-posta Şablonları",
+  "col_email_subject":       "Konu",
+  "col_email_body":          "İçerik",
+  "email_subject_template":  "İş birliği fırsatı — {{name}}",
+  "email_body_template":     "Sayın {{name}} ekibi,\n\n{{city}} şehrindeki işletmenizi keşfettim ve sizinle iletişime geçmek istedim.\n\nSaygılarımla",
+
+  "sheet_run_summary":       "Çalışma Özeti",
+  "summary_run_date":        "Çalışma Tarihi",
+  "summary_total_found":     "Toplam Bulunan",
+  "summary_duplicates":      "Atlanan Tekrarlar",
+  "summary_data_source":     "Veri Kaynağı",
+  "summary_language":        "Dil",
+
+  "log_run_start":           "RUN STARTED",
+  "log_run_complete":        "RUN COMPLETE — {{count}} new businesses | duration: {{duration}}s",
+  "log_run_skipped":         "No new businesses found, skipping email",
+  "log_run_failed":          "RUN FAILED: {{message}}",
+
+  "email_subject":           "SpotCast — {{date}} tarihli yeni potansiyel müşteriler",
+  "email_body_intro":        "Bugünkü SpotCast sonuçlarını ekte bulabilirsiniz.",
+  "email_body_count":        "{{count}} yeni işletme bulundu."
+}

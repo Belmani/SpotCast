@@ -1,0 +1,17 @@
+{
+  "columns": {
+    "place_id":     false,
+    "name":         true,
+    "category":     true,
+    "city":         true,
+    "country":      true,
+    "address":      true,
+    "phone":        true,
+    "website":      true,
+    "rating":       true,
+    "review_count": true,
+    "maps_url":     false,
+    "first_seen":   false
+  },
+  "include_email_templates": true
+}

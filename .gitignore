@@ -8,3 +8,4 @@ tracker.log
 results/
 coverage/
 .env
+.DS_Store

@@ -1,0 +1,37 @@
+{
+  "sheet_businesses":        "Empresas",
+  "col_place_id":            "Place ID",
+  "col_name":                "Nome da empresa",
+  "col_category":            "Categoria",
+  "col_city":                "Cidade",
+  "col_country":             "País",
+  "col_address":             "Endereço",
+  "col_phone":               "Telefone",
+  "col_website":             "Site",
+  "col_rating":              "Avaliação",
+  "col_review_count":        "Avaliações",
+  "col_maps_url":            "URL Maps",
+  "col_first_seen":          "Primeira deteção",
+
+  "sheet_email_templates":   "Modelos de e-mail",
+  "col_email_subject":       "Assunto",
+  "col_email_body":          "Corpo",
+  "email_subject_template":  "Oportunidade de parceria — {{name}}",
+  "email_body_template":     "Prezados de {{name}},\n\nEncontrei a vossa empresa em {{city}} e gostaria de entrar em contacto.\n\nCum os melhores cumprimentos",
+
+  "sheet_run_summary":       "Resumo de execução",
+  "summary_run_date":        "Data de execução",
+  "summary_total_found":     "Total encontrado",
+  "summary_duplicates":      "Duplicados ignorados",
+  "summary_data_source":     "Fonte de dados",
+  "summary_language":        "Idioma",
+
+  "log_run_start":           "RUN STARTED",
+  "log_run_complete":        "RUN COMPLETE — {{count}} new businesses | duration: {{duration}}s",
+  "log_run_skipped":         "No new businesses found, skipping email",
+  "log_run_failed":          "RUN FAILED: {{message}}",
+
+  "email_subject":           "SpotCast — Novos leads para {{date}}",
+  "email_body_intro":        "Em anexo encontra os resultados do SpotCast de hoje.",
+  "email_body_count":        "{{count}} novas empresas encontradas."
+}
