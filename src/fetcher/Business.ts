@@ -14,6 +14,8 @@ export interface Business {
   rating?: number;
   review_count?: number;
   maps_url: string;         // https://www.google.com/maps/place/?q=place_id:...
+  first_seen?: string;      // ISO timestamp — set by DedupService.markSeen() on first detection, never overwritten
+  last_seen?: string;       // ISO timestamp — updated by DedupService.markSeen() on every run
 }
 
 export interface Metadata {
