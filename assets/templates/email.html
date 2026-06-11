@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>SpotCast</title>
+  <!--
+    SpotCast — Email Template
+    Rendered via Handlebars by MailService.
+
+    Available variables:
+      {{date}}        — run date, formatted per i18n.formats.date
+      {{count}}       — number of businesses found, formatted per i18n.formats
+      {{categories}}  — comma-separated list of searched categories
+      {{cities}}      — comma-separated list of searched cities
+      {{{body}}}      — localised body text from i18n.email_body (\n already converted to <br>)
+
+    Triple-stache {{{body}}} is intentional — body already contains <br> tags.
+  -->
+  <!--
+    NOTE FOR DEVELOPERS — DO NOT MOVE STYLES TO EXTERNAL CSS:
+    Inline styles are mandatory in HTML email. Gmail and most email clients
+    strip the entire <head> block, including any <style> or <link> tags.
+    The 'no-inline-styles' warnings from IDE linters are false positives
+    in the context of email templates and must be ignored.
+    Reference: https://www.campaignmonitor.com/css/
+  -->
+  <style>
+    /* Reset — these styles are processed by email pre-processors before send */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; } /* Outlook fix */
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f8;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Outer wrapper -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+       style="background-color: #f4f6f8;">
+  <tr>
+    <td align="center" style="padding: 32px 16px;">
+
+      <!-- Email card -->
+      <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0"
+             style="max-width: 600px; width: 100%; background-color: #ffffff;
+                    border-radius: 6px; overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background-color: #2E75B6; padding: 28px 32px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td>
+                  <span style="font-size: 22px; font-weight: bold; color: #ffffff;
+                               letter-spacing: 0.5px;">
+                    🎯 SpotCast
+                  </span>
+                </td>
+                <td align="right">
+                  <span style="font-size: 13px; color: #cce0f5;">
+                    {{date}}
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Count badge -->
+        <tr>
+          <td style="background-color: #EBF3FB; padding: 16px 32px;
+                     border-bottom: 1px solid #d0e4f5;">
+            <span style="font-size: 15px; color: #1a4a7a; font-weight: bold;">
+              {{count}} new businesses found
+            </span>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding: 28px 32px;">
+            <p style="margin: 0; font-size: 14px; line-height: 1.7; color: #333333;">
+              {{{body}}}
+            </p>
+          </td>
+        </tr>
+
+        <!-- Meta info — categories and cities -->
+        <tr>
+          <td style="padding: 0 32px 24px 32px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                   style="background-color: #f9fbfd; border: 1px solid #ddeaf7;
+                          border-radius: 4px;">
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #ddeaf7;">
+                  <span style="font-size: 12px; color: #6b7c8d; text-transform: uppercase;
+                               letter-spacing: 0.5px;">Categories</span><br />
+                  <span style="font-size: 13px; color: #1a4a7a; font-weight: bold;">
+                    {{categories}}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px;">
+                  <span style="font-size: 12px; color: #6b7c8d; text-transform: uppercase;
+                               letter-spacing: 0.5px;">Cities</span><br />
+                  <span style="font-size: 13px; color: #1a4a7a; font-weight: bold;">
+                    {{cities}}
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Attachment note -->
+        <tr>
+          <td style="padding: 0 32px 28px 32px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td style="background-color: #2E75B6; border-radius: 4px;
+                           padding: 10px 20px;">
+                  <span style="font-size: 13px; color: #ffffff; font-weight: bold;">
+                    📎 SpotCast_{{date}}.xlsx attached
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background-color: #f4f6f8; padding: 16px 32px;
+                     border-top: 1px solid #e0e8f0;">
+            <p style="margin: 0; font-size: 11px; color: #9aacba; text-align: center;">
+              SpotCast — Automated local business discovery
+              &nbsp;·&nbsp;
+              <a href="https://github.com/Belmani/SpotCast"
+                 style="color: #9aacba; text-decoration: none;">
+                github.com/Belmani/SpotCast
+              </a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+      <!-- /Email card -->
+
+    </td>
+  </tr>
+</table>
+<!-- /Outer wrapper -->
+
+</body>
+</html>

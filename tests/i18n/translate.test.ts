@@ -83,14 +83,14 @@ describe('translate — t()', () => {
       const en = (await import('../../assets/i18n/en.json')).default;
       const it_ = (await import('../../assets/i18n/it.json')).default;
       // Italian has sheet_businesses translated — should return Italian value
-      expect(t('sheet_businesses', it_ as Record<string, string>, en as Record<string, string>))
+      expect(t('sheet_businesses', it_ as Record<string, unknown>, en as Record<string, unknown>))
         .toBe('Aziende');
     });
 
     it('real en.json fallback for a key missing in a stub dict', async () => {
       const en = (await import('../../assets/i18n/en.json')).default;
       // Empty active dict — should fall through to en.json
-      expect(t('sheet_businesses', {}, en as Record<string, string>))
+      expect(t('sheet_businesses', {}, en as Record<string, unknown>))
         .toBe('Businesses');
     });
   });

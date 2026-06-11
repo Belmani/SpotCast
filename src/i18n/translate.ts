@@ -26,8 +26,8 @@
  */
 export function t(
   key: string,
-  i18n: Record<string, string>,
-  fallback: Record<string, string>
+  i18n: Record<string, unknown>,
+  fallback: Record<string, unknown>
 ): string {
-  return i18n[key] || fallback[key] || key;
+  return (i18n[key] as string) || (fallback[key] as string) || key;
 }
