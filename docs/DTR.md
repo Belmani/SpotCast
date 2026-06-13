@@ -12,12 +12,14 @@
 **Decision:** Rewrite the original `google_maps_tracker.py` in TypeScript/Node.js instead of maintaining the Python codebase.
 
 **Rationale:**
+
 - The original Python script was provided by the client as a reference, not as a deliverable
 - The team's primary stack is Node.js/TypeScript
 - TypeScript offers strong typing, better IDE support and a mature ecosystem for all required dependencies
 - Node.js runs natively on macOS (confirmed client requirement)
 
 **Evaluated alternatives:**
+
 - Keep Python: rejected — team has no Python expertise, unacceptable maintenance burden
 - Migrate to Java: rejected — overkill for a backend tool of this scope
 
@@ -31,12 +33,14 @@
 **Decision:** Implement exclusively the Google Places API connector. Remove the Claude API connector present in the reference script. No abstract `IFetcher` interface.
 
 **Rationale:**
+
 - The reference Python script used Claude to generate fake business data as a development shortcut — no production value
 - SpotCast's purpose is lead generation from real data
 - A Google Places API key is available for development from day one; Onur will create his own at delivery
 - `IFetcher` is speculative architecture: adds complexity with no second concrete connector on the horizon
 
 **Evaluated alternatives:**
+
 - Keep Claude connector as dev fallback: rejected — Google key available from day one
 - Abstract `IFetcher` interface: deferred until (and if) a second data source becomes necessary
 
@@ -52,6 +56,7 @@
 **Decision:** SpotCast exposes a local REST API at `http://localhost:3847` via Express, as a communication bridge between the Node.js backend and the future JavaFX GUI (ForgeUI).
 
 **Rationale:**
+
 - The GUI will be built in JavaFX (Java), which cannot directly invoke Node.js internals
 - Two architectural options evaluated:
   - **Child Process:** Java launches `node SpotCast.js` and reads stdout. Simple but unidirectional, fragile, not queryable
@@ -61,6 +66,7 @@
 - The REST server starts only in `--daemon` mode
 
 **Evaluated alternatives:**
+
 - WebSocket: rejected — overkill for request/response interaction
 - gRPC: rejected — unjustified complexity for a local tool
 
@@ -74,6 +80,7 @@
 **Decision:** Use `place_id` as the deduplication key in `seen_firms.json`.
 
 **Rationale:**
+
 - Names and addresses can change, causing false "new business" detections
 - `place_id` is stable, unique and provided by the Google Places API on every result
 - Guarantees a reliable long-term history
@@ -88,6 +95,7 @@
 **Decision:** All configuration lives in `config.json`. Sensitive fields (`google_api_key`, `smtp.user`, `smtp.pass`) are overridden by environment variables (`GOOGLE_API_KEY`, `SMTP_USER`, `SMTP_PASS`) when present.
 
 **Rationale:**
+
 - `config.json` provides a single, human-readable configuration file for end users
 - Environment variables follow the 12-factor app convention for secrets
 - `config.json` is gitignored; `config.example.json` (without secrets) is committed
@@ -106,6 +114,7 @@ The graphical wizard will write non-sensitive values to `config.json` and set se
 **Decision:** Use Zod v3 for `config.json` validation and automatic `Config` type inference.
 
 **Rationale:**
+
 - `JSON.parse()` returns `any` — TypeScript cannot guarantee anything about the structure of an external file
 - Zod allows declaring schema, validation and type in a single declaration
 - Field-by-field human-readable errors (e.g. `google_api_key is required`)
@@ -114,6 +123,7 @@ The graphical wizard will write non-sensitive values to `config.json` and set se
 **Version note:** Zod 4 is available but not yet production-stable. Consistent with the project's stability philosophy (see DTR-016).
 
 **Evaluated alternatives:**
+
 - Manual validation: rejected — verbose, repetitive, easy to forget
 - `io-ts`: rejected — more complex API, higher learning curve for equivalent benefits
 
@@ -127,6 +137,7 @@ The graphical wizard will write non-sensitive values to `config.json` and set se
 **Decision:** Use Winston as the logging system with file transport (`tracker.log`) and console (silenced in production).
 
 **Rationale:**
+
 - `fs.appendFileSync` is insufficient for a distributed tool: no levels, no formatting, no rotation
 - Winston is the most mature logger in the Node.js ecosystem, production-ready
 - `error/warn/info/debug` levels allow filtering noise in production
@@ -144,6 +155,7 @@ The graphical wizard will write non-sensitive values to `config.json` and set se
 **Decision:** Use Vitest as the testing framework. TDD integrated into every milestone — tests are not optional.
 
 **Rationale:**
+
 - Vitest is ESM native, superior performance to Jest, identical API (drop-in replacement for those familiar with Jest)
 - Clean and modern mocking API — `vi.mock()`, `vi.fn()`, `vi.spyOn()`
 - Native TypeScript integration with no additional configuration
@@ -157,6 +169,7 @@ The graphical wizard will write non-sensitive values to `config.json` and set se
 **Async test note:** `it()` callbacks containing `await` (e.g. dynamic imports) must be declared `async`. Lesson learned in M3.
 
 **Evaluated alternatives:**
+
 - Jest: rejected — CommonJS-first architecture, inferior performance, more verbose TypeScript configuration
 - Bun Test: rejected — ecosystem still too young for a project distributed to third parties
 
@@ -170,6 +183,7 @@ The graphical wizard will write non-sensitive values to `config.json` and set se
 **Decision:** The base `Business` model is extended in subsequent milestones via composition (`EnrichedBusiness extends Business` with `metadata: Metadata[]` array), not via multiple inheritance or modification of the base model.
 
 **Rationale:**
+
 - The base `Business` model corresponds to what the Google Places API provides today — must remain stable
 - Additional information varies by source and milestone — inheritance would create a rigid hierarchy
 - Composition with `Metadata[]` is open by definition: every new piece of information is one more `Metadata`, zero changes to the base model
@@ -177,11 +191,12 @@ The graphical wizard will write non-sensitive values to `config.json` and set se
 - `MetadataKey` enum extensible milestone by milestone without breaking changes
 
 **Structure:**
+
 ```typescript
 interface Metadata {
-  key: string;           // MetadataKey enum or custom string
+  key: string; // MetadataKey enum or custom string
   value: string;
-  source?: string;       // 'google' | 'manual' | 'enrichment_api'
+  source?: string; // 'google' | 'manual' | 'enrichment_api'
   collected_at?: string; // ISO timestamp
 }
 
@@ -200,12 +215,14 @@ interface EnrichedBusiness extends Business {
 **Decision:** The `seen_firms.json` file will be replaced by a SQLite database managed via `better-sqlite3` to support the discovery history viewable from the GUI.
 
 **Rationale:**
+
 - `seen_firms.json` is sufficient for deduplication but not for historical queries
 - SQLite is a single `.db` file in the project folder — zero servers, zero configuration, zero additional installation
 - `better-sqlite3` is synchronous, performant and typed
 - The world's most deployed database — proven reliability
 
 **Evaluated alternatives:**
+
 - MongoDB/CouchDB: rejected — requires separate server
 - LowDB: rejected — not performant for historical queries
 - PostgreSQL: rejected — total overkill
@@ -222,6 +239,7 @@ interface EnrichedBusiness extends Business {
 **Launch languages:** Italian, English, German, French, Spanish, Portuguese, Simplified Chinese, Japanese, Arabic, Turkish.
 
 **Rationale:**
+
 - The 10 languages cover over 80% of worldwide web traffic
 - Turkish added for the relevance of the target market (initial client Onur) and the size of the user base (85M+ speakers)
 - Arabic requires specific attention for RTL layout in Excel export
@@ -237,6 +255,7 @@ interface EnrichedBusiness extends Business {
 **Decision:** The GUI will be built in JavaFX using the ForgeUI design system, developed in parallel with NomadSync. SpotCast serves as the ForgeUI pilot project.
 
 **Rationale:**
+
 - JavaFX is native, cross-platform and requires no server
 - ForgeUI guarantees visual consistency between SpotCast and NomadSync
 - The REST API (DTR-003) provides the bridge between the Java GUI and Node.js backend
@@ -252,6 +271,7 @@ interface EnrichedBusiness extends Business {
 **Decision:** SpotCast will include a graphical installer that automates the entire setup procedure.
 
 **Rationale:**
+
 - Manual installation is a barrier for non-technical users
 - Distribution on Softonic requires a bulletproof experience
 - The wizard is the natural entry point for the JavaFX/ForgeUI GUI
@@ -288,6 +308,7 @@ interface EnrichedBusiness extends Business {
 **Decision:** Dependencies are pinned to the latest stable major version and updated deliberately, not chasing every new release. Priority given to compatibility with the real installed base of end users.
 
 **Rationale:**
+
 - SpotCast's end user is not a developer — the wizard will install Node for them
 - The same philosophy governs Java 21 on NomadSync and ForgeUI: long-term stability > recent features
 - Node.js `>=20.0.0`, pnpm `>=9.0.0` — thresholds covering 90%+ of current installations
@@ -305,6 +326,7 @@ interface EnrichedBusiness extends Business {
 **Decision:** Use pnpm as the package manager instead of npm.
 
 **Rationale:**
+
 - npm had proven problematic in previous team projects (ToDoList) in combination with StoryBook
 - pnpm is faster, deterministic and Docker-friendly
 - Global store with hard links: faster installs, lighter `node_modules`
@@ -314,6 +336,7 @@ interface EnrichedBusiness extends Business {
 **Version adopted:** pnpm 10.30.2 — latest version compatible with Node.js 18+ (pnpm 11 requires Node 22).
 
 **Evaluated alternatives:**
+
 - npm: rejected — problematic history in the team
 - yarn v1: rejected — legacy, no longer actively developed
 - yarn Berry: rejected — plug'n'play creates incompatibilities with some tools
@@ -329,6 +352,7 @@ interface EnrichedBusiness extends Business {
 **Decision:** Use ESLint 9 with flat config in `.mjs` (ES Module) format instead of the legacy `.eslintrc.json` format.
 
 **Rationale:**
+
 - ESLint 9 no longer supports `.eslintrc.*` — mandatory migration
 - `.mjs` allows using `import/export` in the configuration file regardless of `"type"` in `package.json`
 - Avoids having to add `"type": "module"` to `package.json`, which would require explicit `.js` extensions in all TypeScript imports — behaviour considered unacceptable by the team
@@ -345,11 +369,13 @@ interface EnrichedBusiness extends Business {
 **Decision:** No aggregated statistics structures (by category, city, historical totals) are implemented in `seen_firms.json` or anywhere else before M11+.
 
 **Rationale:**
+
 - Statistics by category and city require dynamic aggregation — not cleanly modelable in flat JSON
 - Any structure invented now in JSON would be a workaround to discard at SQLite migration
 - The principle: zero is better than wrong
 
 **Future implementation (M11+):**
+
 - SQLite with `better-sqlite3` as primary source
 - Statistics via aggregate queries on the database
 - `seen_firms.json` remains as offline fallback, without statistical fields
@@ -364,6 +390,7 @@ interface EnrichedBusiness extends Business {
 **Decision:** The `first_seen` field (ISO timestamp) is added to the `Business` model as an optional field. It is populated by `DedupService.markSeen()` at the time of first detection. `GoogleFetcher` does not know about it and leaves it `undefined`.
 
 **Rationale:**
+
 - Business information should live in the `Business` model, not duplicated in `seen_firms.json`
 - `first_seen` is an attribute of the business, not of the deduplication system
 - Natively available for M11+ when data migrates to SQLite
@@ -378,6 +405,7 @@ interface EnrichedBusiness extends Business {
 **Decision:** `seen_firms.json` has one single responsibility: keeping the list of `place_id` values already sent. No other data lives in this file — no `first_seen`, no categories, no statistics, no counters.
 
 **Final structure:**
+
 ```json
 {
   "seen": ["ChIJ...", "ChIJ..."],
@@ -386,6 +414,7 @@ interface EnrichedBusiness extends Business {
 ```
 
 **Rationale:**
+
 - Clear separation of responsibilities: deduplication in the file, business data in the model, statistics in M11+
 - No duplication of information already present in `Business`
 - Minimal file, fast, no risk of inconsistency
@@ -400,16 +429,19 @@ interface EnrichedBusiness extends Business {
 **Decision:** The `last_seen` field (ISO timestamp) is added to the `Business` model as an optional field, alongside `first_seen` (DTR-020). It is updated by `DedupService.markSeen()` on every run in which the business is present in the sent batch.
 
 **Rationale:**
+
 - `first_seen` tracks the first detection — invariant over time
 - `last_seen` tracks the most recent detection — updated on every run
 - The distinction is necessary for frequency and lead relevance analysis (e.g. "this dental practice appears every week")
 - Both fields will be native columns in the M11+ SQLite table, with no data migration required
 
 **Behaviour in `markSeen()`:**
+
 - `first_seen`: written once, never overwritten — if already present on the object, it is preserved
 - `last_seen`: always updated to the current execution timestamp
 
 **Evaluated and rejected alternative:**
+
 - `last_updated` (update of business metadata): rejected — has no producer in the system yet. Territory of M10+; adding it now would be speculative architecture (same principle as DTR-002 on `IFetcher`).
 
 ---
@@ -422,10 +454,11 @@ interface EnrichedBusiness extends Business {
 **Decision:** `DedupService` accepts an optional path in the constructor for the `seen_firms.json` file. The default is `path.resolve(process.cwd(), 'seen_firms.json')`.
 
 ```typescript
-constructor(filePath = path.resolve(process.cwd(), 'seen_firms.json'))
+constructor((filePath = path.resolve(process.cwd(), "seen_firms.json")));
 ```
 
 **Rationale:**
+
 - Same pattern adopted by `loadConfig(configPath?)` in M1 — consistency in the testability approach
 - Allows tests to use isolated temporary directories (`os.tmpdir()`) without filesystem mocking
 - Mocking `fs` hides real JSON serialisation bugs — real files are more reliable
@@ -441,16 +474,19 @@ constructor(filePath = path.resolve(process.cwd(), 'seen_firms.json'))
 **Decision:** `DedupService` loads `seen_firms.json` lazily (on first use, not in the constructor) and writes to disk synchronously (`fs.writeFileSync`).
 
 **Lazy loading rationale:**
+
 - The file may not exist at instance construction time (first run)
 - The process boot must not fail for a missing file
 - The empty structure is created automatically on the first `markSeen()` or `reset()` call
 
 **Synchronous write rationale:**
+
 - The file is small (< 1 MB even after years of use — only an array of strings)
 - Synchrony guarantees that `place_id` values are on disk even if the process is terminated immediately after the write
 - The pipeline calls `markSeen()` as the last operation after sending the email — the added latency is negligible
 
 **Corrupt file recovery:**
+
 - Malformed JSON or invalid structure (`seen` is not an array) → warning on logger, restarts from empty structure
 - Subsequent data is written correctly — no loss of future state
 
@@ -464,21 +500,22 @@ constructor(filePath = path.resolve(process.cwd(), 'seen_firms.json'))
 **Decision:** Excel export behaviour is governed by a dedicated configuration file `excel.json`, separate from `config.json`. It defines which columns are visible and which optional sheets are enabled.
 
 **Structure:**
+
 ```json
 {
   "columns": {
-    "place_id":     false,
-    "name":         true,
-    "category":     true,
-    "city":         true,
-    "country":      true,
-    "address":      true,
-    "phone":        true,
-    "website":      true,
-    "rating":       true,
+    "place_id": false,
+    "name": true,
+    "category": true,
+    "city": true,
+    "country": true,
+    "address": true,
+    "phone": true,
+    "website": true,
+    "rating": true,
     "review_count": true,
-    "maps_url":     false,
-    "first_seen":   false
+    "maps_url": false,
+    "first_seen": false
   },
   "include_email_templates": true
 }
@@ -489,12 +526,14 @@ constructor(filePath = path.resolve(process.cwd(), 'seen_firms.json'))
 **Column order:** the order of keys in `columns` determines the column order in the sheet — no hardcoding in the exporter.
 
 **Rationale:**
+
 - Onur must be able to hide technical columns (`place_id`, `maps_url`) without modifying code
 - File-based configurability avoids releasing a new version just to change the layout
 - Separation from `config.json` keeps operational configuration distinct from presentation configuration
 - Consistent with the single responsibility principle already applied to `seen_firms.json` (DTR-021)
 
 **Evaluated alternatives:**
+
 - Constructor parameters on `ExcelExporter`: rejected — not persistable, not modifiable by the end user
 - Always include all columns: rejected — `place_id` and `maps_url` are noise for a non-technical user
 
@@ -508,16 +547,20 @@ constructor(filePath = path.resolve(process.cwd(), 'seen_firms.json'))
 **Decision:** Sheet 2 "Email Templates" is an optional feature controlled by `excel.json → include_email_templates`. It generates one row per business with pre-filled email subject and body rendered via Handlebars, ready to copy into the user's email client.
 
 **Sheet 2 column structure:**
+
 ```
 name | category | city | email_subject | email_body
 ```
+
 `name`, `category`, `city` are context columns — they identify the business without having to jump between sheets. Not all Sheet 1 fields are repeated.
 
 **Handlebars templates — i18n keys:**
+
 ```json
 "email_subject_template": "Partnership opportunity — {{name}}",
 "email_body_template":    "Dear {{name}},\n\nI noticed your business in {{city}} and would love to connect.\n\nBest regards"
 ```
+
 Available variables: all `Business` fields — `{{name}}`, `{{city}}`, `{{category}}`, `{{address}}`, `{{website}}`.
 
 **Multi-line body:** `wrapText: true` on the `email_body` column alignment — the `\n` in the template becomes a visible line break in Excel.
@@ -526,6 +569,7 @@ Available variables: all `Business` fields — `{{name}}`, `{{city}}`, `{{catego
 This sheet is the structural seed of the M12 email management panel. Templates already structured in M4 will avoid a refactor when M12 adds direct sending with status tracking (sent / replied / ignored).
 
 **Rationale:**
+
 - Immediate productivity tool for Onur with no automation — zero risk
 - Configurable: those who don't want it disable it in `excel.json`
 - Anticipates the M12 data structure at zero cost
@@ -540,6 +584,7 @@ This sheet is the structural seed of the M12 email management panel. Templates a
 **Decision:** The translation function is extracted into a shared module `src/i18n/translate.ts`, used by all modules that require localised strings (`ExcelExporter`, `MailService`, `Scheduler`).
 
 **Implementation:**
+
 ```typescript
 export function t(
   key: string,
@@ -551,11 +596,13 @@ export function t(
 ```
 
 **Three fallback levels:**
+
 1. Active language (`i18n`)
 2. `en.json` as universal fallback (`fallback`)
 3. The key itself as last resort — at least it's visible what's missing instead of an empty string
 
 **Rationale:**
+
 - Avoids duplicating fallback logic across every module
 - The third level (key as fallback) makes missing keys immediately visible during development and QA
 - Consistent with the DRY principle — one implementation, tested once
@@ -574,49 +621,50 @@ export function t(
 
 **v1.0.0 — Delivery to Onur + Softonic publication**
 
-| Milestone | Content | Status |
-|---|---|---|
-| M1 | Scaffold and configuration | ✅ Complete |
-| M2 | Google Places Fetcher | ✅ Complete |
-| M3 | DedupService | ✅ Complete |
-| M4 | Excel Export | 🔧 In progress |
-| M5 | MailService | ⏳ |
-| M6 | Scheduler + daemon | ⏳ |
+| Milestone | Content                    | Status         |
+| --------- | -------------------------- | -------------- |
+| M1        | Scaffold and configuration | ✅ Complete    |
+| M2        | Google Places Fetcher      | ✅ Complete    |
+| M3        | DedupService               | ✅ Complete    |
+| M4        | Excel Export               | 🔧 In progress |
+| M5        | MailService                | ⏳             |
+| M6        | Scheduler + daemon         | ⏳             |
 
 **v1.1.0 — First post-launch update**
 
-| Milestone | Content |
-|---|---|
-| M7 | REST API — Node.js ↔ JavaFX GUI bridge (Express port 3847) |
-| M8 | Complete i18n — verify all keys in all languages, automated tests |
-| M9 | Packaging and documentation — README, CHANGELOG, Softonic release |
+| Milestone | Content                                                           |
+| --------- | ----------------------------------------------------------------- |
+| M7        | REST API — Node.js ↔ JavaFX GUI bridge (Express port 3847)        |
+| M8        | Complete i18n — verify all keys in all languages, automated tests |
+| M9        | Packaging and documentation — README, CHANGELOG, Softonic release |
 
 **v1.2.0**
 
-| Milestone | Content |
-|---|---|
-| M10 | GUI JavaFX + ForgeUI — dashboard, installation wizard, config form |
+| Milestone | Content                                                            |
+| --------- | ------------------------------------------------------------------ |
+| M10       | GUI JavaFX + ForgeUI — dashboard, installation wizard, config form |
 
 **v1.3.0**
 
-| Milestone | Content |
-|---|---|
-| M11 | SQLite + discovery history — migration from `seen_firms.json`, statistics, GUI history view |
+| Milestone | Content                                                                                     |
+| --------- | ------------------------------------------------------------------------------------------- |
+| M11       | SQLite + discovery history — migration from `seen_firms.json`, statistics, GUI history view |
 
 **v1.4.0**
 
-| Milestone | Content |
-|---|---|
-| M12 | Email management panel — business selection, direct sending, status tracking (prerequisite: M10 + M11) |
+| Milestone | Content                                                                                                |
+| --------- | ------------------------------------------------------------------------------------------------------ |
+| M12       | Email management panel — business selection, direct sending, status tracking (prerequisite: M10 + M11) |
 
 **v2.0.0**
 
-| Milestone | Content |
-|---|---|
-| M13 | Data enrichment — populating `Metadata[]` with email, LinkedIn, ad_budget from external sources |
-| M14 | Multi-user and Pro licence — account management, freemium activation €3.99/month from month 2 |
+| Milestone | Content                                                                                         |
+| --------- | ----------------------------------------------------------------------------------------------- |
+| M13       | Data enrichment — populating `Metadata[]` with email, LinkedIn, ad_budget from external sources |
+| M14       | Multi-user and Pro licence — account management, freemium activation €3.99/month from month 2   |
 
 **Rationale:**
+
 - The roadmap correctly sequences architectural dependencies: M7 (REST API) prerequisite of M10 (GUI), M10 + M11 prerequisites of M12 (email panel)
 - Each version is independently releasable and deliverable
 - Sheet 2 from M4 (DTR-026) is the structural seed of M12 — zero-cost anticipation
@@ -633,16 +681,17 @@ export function t(
 
 **Project configuration files:**
 
-| File | Domain | Gitignored |
-|---|---|---|
-| `config.json` | Operational configuration (API key, SMTP, schedule, languages) | ✅ |
-| `config.example.json` | Committed template without secrets | ❌ |
-| `excel.json` | Excel export presentation configuration (columns, sheets) | ❌ |
-| `seen_firms.json` | Deduplication history (already-sent place_ids) | ✅ |
+| File                  | Domain                                                         | Gitignored |
+| --------------------- | -------------------------------------------------------------- | ---------- |
+| `config.json`         | Operational configuration (API key, SMTP, schedule, languages) | ✅         |
+| `config.example.json` | Committed template without secrets                             | ❌         |
+| `excel.json`          | Excel export presentation configuration (columns, sheets)      | ❌         |
+| `seen_firms.json`     | Deduplication history (already-sent place_ids)                 | ✅         |
 
 **Operational rule:** when the need to configure a new functional domain arises, a dedicated file is created — `config.json` is not extended. The new file follows the pattern: example file committed, real file gitignored if it contains sensitive or state data.
 
 **Rationale:**
+
 - Clear separation of responsibilities — each file has a single reason to change
 - `config.json` stays readable and does not grow indefinitely
 - Separate files can be versioned, committed or gitignored independently based on their nature
@@ -659,6 +708,7 @@ export function t(
 **Decision:** JSON localisation files (`en.json`, `it.json`, …) live in `assets/i18n/`. Translation code (`translate.ts`) stays in `src/i18n/`. The `assets/` folder collects everything that is neither TypeScript code nor root-level configuration.
 
 **Structure:**
+
 ```
 assets/
 └── i18n/
@@ -673,6 +723,7 @@ src/
 ```
 
 **Rationale:**
+
 - Established cross-discipline principle in web development: localisations, images, CSS and everything that is not code or configuration belongs in `assets/`
 - Clear separation between compilable artefacts (`src/`) and static resources (`assets/`)
 - Makes it easy to replace or update a language file without touching code
@@ -691,13 +742,14 @@ src/
 
 ```typescript
 // Correct
-const en = (await import('../../assets/i18n/en.json')).default;
+const en = (await import("../../assets/i18n/en.json")).default;
 
 // Incorrect — generates ts(2352): 'default' property incompatible with Record<string, string>
-const en = await import('../../assets/i18n/en.json');
+const en = await import("../../assets/i18n/en.json");
 ```
 
 **Rationale:**
+
 - TypeScript with `esModuleInterop: true` and `resolveJsonModule: true` wraps JSON content in an object with a `default` key
 - Without `.default` the resulting type includes the extra `default` property, incompatible with `Record<string, string>` and similar generic indices
 - The compiler reports the error as `ts(2352)` — detected in M4 in `translate.test.ts` tests
@@ -714,6 +766,7 @@ const en = await import('../../assets/i18n/en.json');
 **Decision:** Sheet 1 columns are determined exclusively by `excel.json`. The order of keys in the JSON determines the column order in the sheet. No column list is hardcoded in `ExcelExporter.ts`.
 
 **Implementation:**
+
 ```typescript
 const activeCols = Object.entries(this.excelConfig.columns)
   .filter(([, enabled]) => enabled)
@@ -721,6 +774,7 @@ const activeCols = Object.entries(this.excelConfig.columns)
 ```
 
 **Rationale:**
+
 - Onur can reorder columns by editing `excel.json` without touching code
 - `Object.entries()` preserves key insertion order — behaviour guaranteed since ES2015+
 - The `colKey → fieldName` and `colKey → i18nKey` mappings are declarative and centralised in the `COL_TO_FIELD` and `COL_TO_I18N_KEY` constants
@@ -739,11 +793,13 @@ col.width = Math.max(MIN_COL_WIDTH, headerLen, maxDataLen) + COL_PADDING;
 ```
 
 **Parameters:**
+
 - `MIN_COL_WIDTH = 10` — guaranteed minimum width for columns with short or empty data
 - `COL_PADDING = 2` — additional visual margin
 - The calculation considers header and all data values — takes the maximum
 
 **Rationale:**
+
 - The calculation must happen after data insertion — it cannot be done in advance
 - The minimum width prevents columns from being too narrow for optional data (e.g. `phone`, `website`)
 - Established approach in the ExcelJS ecosystem — no third-party library needed
@@ -759,22 +815,23 @@ col.width = Math.max(MIN_COL_WIDTH, headerLen, maxDataLen) + COL_PADDING;
 
 ```typescript
 // Correct — compilation outside the loop
-const subjectTemplate = Handlebars.compile(tr('email_subject_template'));
-const bodyTemplate    = Handlebars.compile(tr('email_body_template'));
+const subjectTemplate = Handlebars.compile(tr("email_subject_template"));
+const bodyTemplate = Handlebars.compile(tr("email_body_template"));
 
-businesses.forEach(business => {
+businesses.forEach((business) => {
   const subject = subjectTemplate(business);
-  const body    = bodyTemplate(business);
+  const body = bodyTemplate(business);
   // ...
 });
 
 // Incorrect — compilation inside the loop, O(n) unnecessary compilations
-businesses.forEach(business => {
-  const subject = Handlebars.compile(tr('email_subject_template'))(business);
+businesses.forEach((business) => {
+  const subject = Handlebars.compile(tr("email_subject_template"))(business);
 });
 ```
 
 **Rationale:**
+
 - `Handlebars.compile()` performs template parsing and compilation — a non-trivial operation
 - With N businesses in the batch, compiling inside the loop multiplies the cost by N with no benefit
 - The template does not change between one business and the next — the compiled function is reusable
@@ -789,19 +846,23 @@ businesses.forEach(business => {
 **Decision:** `MailService` sends a single email with the first address from `config.email_to` in `to` and all others in `bcc`. Recipients cannot see each other.
 
 **Implementation:**
+
 ```typescript
 to:  recipients[0],
 bcc: recipients.slice(1).join(', '),
 ```
+
 If `email_to` has a single recipient, `bcc` is an empty string — Nodemailer handles this correctly without errors.
 
 **Rationale:**
+
 - Protects recipient privacy — safer default for a tool distributed to third parties
 - SpotCast may be resold or used in teams — exposing addresses to each other is unacceptable
 - Zero additional complexity compared to the `to` multiple alternative
 - Behaviour to be documented in the user README — not obvious to someone configuring `email_to`
 
 **Evaluated alternatives:**
+
 - All in `to`: rejected — exposes addresses to all recipients
 - Separate email per recipient: rejected — overkill, N SMTP calls instead of one
 
@@ -825,6 +886,7 @@ try {
 ```
 
 **Rationale:**
+
 - `sendMail()` returns a Promise — the error is asynchronous. Without `try/catch` it becomes an `UnhandledPromiseRejection` which in Node.js 20+ terminates the process without a useful log
 - `MailService` is dumb by design — it only knows how to send emails. It does not have the context to decide whether an SMTP error is fatal for the run
 - The M6 pipeline catches the `throw` and decides: logs the run failure, but the daemon process stays alive for the next run
@@ -858,6 +920,7 @@ formatDecimal(n: number, i18n: Record<string, unknown>): string
 **Fallback:** if `i18n.formats` is absent or incomplete, defaults to EN behaviour (`YYYY-MM-DD`, `.` decimal, `,` thousands).
 
 **Rationale:**
+
 - Without localised formatting Onur's email shows "10/06/2026" in Italian and "2026-06-10" in English — inconsistent
 - The `formatInteger` / `formatDecimal` separation avoids absurd output like "32.00 new businesses found"
 - `format.ts` is the natural extension of `translate.ts` — same `src/i18n/` module, same philosophy (receives already-loaded dictionary, does not touch the filesystem)
@@ -877,6 +940,7 @@ formatDecimal(n: number, i18n: Record<string, unknown>): string
 2. **HTML wrapper** (`templates/email.html`): static file with visual structure (font, colours, spacing), receives `{{{body}}}` as a Handlebars variable (triple-stache to avoid escaping the already-produced HTML)
 
 **Variables available in the wrapper:**
+
 ```
 {{date}}        — run date formatted with formatDate()
 {{count}}       — business count formatted with formatInteger()
@@ -886,6 +950,7 @@ formatDecimal(n: number, i18n: Record<string, unknown>): string
 ```
 
 **Rationale:**
+
 - Separation of content and presentation: text changes per language, the HTML wrapper is invariant
 - `\n` → `<br>` applied to the i18n body, not in the template — keeps JSON files readable as plain text
 - Triple-stache `{{{body}}}` is necessary because the body already contains `<br>` tags — double-stache `{{body}}` would escape them to `&lt;br&gt;`
@@ -919,6 +984,7 @@ export function t(key: string, i18n: Record<string, string>, ...): string
 ```
 
 **Rationale:**
+
 - Adding `formats` as a nested object in M4 made `Record<string, string>` incompatible with the real structure of i18n files
 - TypeScript reports `ts(2352)` when attempting to cast a type with non-string properties to `Record<string, string>`
 - `Record<string, unknown>` is the correct type for any JSON dictionary with heterogeneous structure
@@ -937,13 +1003,14 @@ export function t(key: string, i18n: Record<string, string>, ...): string
 
 ```typescript
 // Incorrect — 'it' is a Vitest function, not a variable
-const it = { formats: { date: 'DD/MM/YYYY' } };
+const it = { formats: { date: "DD/MM/YYYY" } };
 
 // Correct
-const it_ = { formats: { date: 'DD/MM/YYYY' } };
+const it_ = { formats: { date: "DD/MM/YYYY" } };
 ```
 
 **Rationale:**
+
 - Vitest imports `it` as a global function when `globals: true` is active in `vitest.config.ts`
 - A local variable with the same name shadows the global function — tests fail with `TypeError: it is not a function`
 - The `_` suffix is an established TypeScript convention for avoiding conflicts with reserved keywords and identifiers
@@ -960,24 +1027,156 @@ const it_ = { formats: { date: 'DD/MM/YYYY' } };
 **Decision:** Nodemailer's `jsonTransport` serialises addresses as `{address, name}` objects and attachments as `content` (buffer), not as `path`. Tests must assert on the real payload structure, not on string representations.
 
 **jsonTransport payload structure:**
+
 ```typescript
 // Addresses — NOT flat strings
-msg.to   // → Array<{ address: string; name: string }>
-msg.bcc  // → Array<{ address: string; name: string }>
-msg.from // → { address: string; name: string }
+msg.to; // → Array<{ address: string; name: string }>
+msg.bcc; // → Array<{ address: string; name: string }>
+msg.from; // → { address: string; name: string }
 
 // Attachments — content resolved, path not present
-msg.attachments // → Array<{ filename: string; content: Buffer }>
+msg.attachments; // → Array<{ filename: string; content: Buffer }>
 
 // Correct access
 const to = msg.to as Array<{ address: string }>;
-expect(to[0].address).toBe('primary@test.com');
+expect(to[0].address).toBe("primary@test.com");
 
 // Incorrect — String() on an object produces '[object Object]'
-expect(String(msg.to)).toContain('primary@test.com'); // FAILS
+expect(String(msg.to)).toContain("primary@test.com"); // FAILS
 ```
 
 **Rationale:**
+
 - The format is documented in Nodemailer's source code but not explicitly in the public documentation
 - Discovered empirically in M5 — 4 tests failed on the first run for this reason
 - The knowledge is now tracked to avoid the same issue in future suites using `jsonTransport`
+
+---
+
+## DTR-042 — Replacing GoogleFetcher with HereFetcher (HERE Browse API)
+
+**Date:** 2026-06-13
+**Status:** Accepted — implemented in M7
+
+**Decision:** `GoogleFetcher` is deprecated and replaced by `HereFetcher` based on HERE Browse API. `GoogleFetcher.ts` remains in the repository as a historical reference but is no longer instantiated by the pipeline.
+
+**Rationale:**
+
+- Google Places Text Search has a structural limit of 20 results per query, 60 with pagination — not bypassable client-side
+- In end-to-end testing on Tolmezzo/Socchieve with global `results_per_run: 10`, the first category exhausted the budget hiding all others
+- HERE Browse API supports real pagination with `offset`, no artificial per-query limits
+- HERE has comprehensive European coverage with stable data guaranteed by enterprise contracts
+- Geographic approach (lat/lng + radius + category code) is more precise than text query
+- Architecture compatible with Overture Maps in M14+ — same data model
+
+**Impact:** only `SpotCast.ts` changes its import line. The rest of the pipeline is unchanged.
+
+**Alternatives considered:**
+
+- Google Places pagination with `next_page_token`: 60-result hard cap remains, mandatory delay between pages, tripled API cost — rejected
+- Selenium/Playwright on Google Search: estimated feasibility 40%, continuous maintenance against Google anti-bot, war of attrition — rejected
+
+---
+
+## DTR-043 — `categories` in config.json: English text labels → HERE codes via HereCategoryMap
+
+**Date:** 2026-06-13
+**Status:** Accepted — implemented in M7
+
+**Decision:** Categories in `config.json` remain English text strings (`"Bar"`, `"Gym"`, `"Lawyer"`). Conversion to HERE codes happens in `ConfigLoader.ts` via `HereCategoryMap.ts` before data reaches `HereFetcher`. `HereFetcher` receives only already-validated codes — it does not know about labels.
+
+**`HereCategoryMap.ts` structure:**
+
+```typescript
+export const HERE_CATEGORY_MAP: Record<string, string> = {
+  Bar: "100-1000-0000",
+  Restaurant: "100-1100-0000",
+  Gym: "400-4100-0141",
+  Lawyer: "700-7400-0246",
+  Plumber: "700-7400-0249",
+  Locksmith: "700-7400-0116",
+  // extensible — adding a category = adding one line
+};
+```
+
+**Behavior on unrecognized category:** WARN in log + skip that category. If all categories are invalid → fatal error with `fatal()` and exit code 1.
+
+**Rationale:**
+
+- End users should not need to know HERE numeric codes
+- Separated responsibility: `ConfigLoader` validates and translates, `HereFetcher` executes
+- Extensible without modifying `HereFetcher`
+
+**i18n roadmap (post-M7):** config labels will remain in English as the common language. Going forward, the pipeline will translate active i18n labels to English before conversion — no changes to the map needed.
+
+---
+
+## DTR-044 — `results_per_run` removed, unlimited pagination with HERE
+
+**Date:** 2026-06-13
+**Status:** Accepted — breaking change in M7
+
+**Decision:** The `results_per_run` field is removed from `config.json` and `ConfigLoader`. `HereFetcher` automatically paginates until HERE results are exhausted for each category×city combination.
+
+**Rationale:**
+
+- `results_per_run` as a global cap was hiding categories: the first category would exhaust the budget before others were queried — issue found in M6 end-to-end testing
+- HERE Browse API has no artificial limits — pagination is real and deterministic
+- End users want all available businesses, not an arbitrary subset
+
+**Breaking change:** existing `config.json` files with `results_per_run` produce a WARN on load. The field is silently ignored after the warning.
+
+---
+
+## DTR-045 — Geocoding with file cache `geocache.json`
+
+**Date:** 2026-06-13
+**Status:** Accepted — implemented in M7
+
+**Decision:** Geographic coordinates for cities are cached in `geocache.json` at the project root. The cache is consulted before every HERE Geocoding API call. New results are written to the cache immediately after fetch.
+
+**Structure:**
+
+```json
+{
+  "Berlin, Germany": { "lat": 52.52, "lng": 13.405 },
+  "Munich, Germany": { "lat": 48.1351, "lng": 11.582 },
+  "Niedernhausen, Germany": { "lat": 50.1731, "lng": 8.3197 }
+}
+```
+
+**`geocache.json` is committed to the repository.** Contains no secrets. Pre-loaded with major European cities — improves out-of-the-box experience.
+
+**Rationale:**
+
+- Geographic coordinates do not change over time
+- Avoids redundant API calls on every run for the same cities
+- The file grows organically with cities used by different users
+
+---
+
+## DTR-046 — Roadmap M13: German Handelsregister as B2B lead source
+
+**Date:** 2026-06-13
+**Status:** Planned (M13)
+
+**Decision:** In M13 a connector for the German Handelsregister (public company registry) will be implemented as the primary B2B lead source for the German market.
+
+**Rationale:**
+
+- Every newly registered GmbH has deposited at least €25,000 in share capital — qualified leads by definition
+- Data is public, free and stable — zero API costs, no ban risk
+- SpotCast intercepts the company at the exact moment of legal birth, weeks before it has a Google Maps or HERE listing
+- Directly addresses Benjamin's requirement: high-capitalisation leads that have just emerged
+
+**Planned architecture:**
+
+```
+Daily Handelsregister feed
+  → new GmbH/UG registration parser
+  → HERE Geocoding for coordinates
+  → existing Business model
+  → unchanged pipeline (dedup → excel → email)
+```
+
+**Alternative rejected — Selenium/Playwright on Google Search:** feasibility 40%, continuous maintenance against Google anti-bot systems, rotating proxies ~€20-50/month, unsustainable long-term.
