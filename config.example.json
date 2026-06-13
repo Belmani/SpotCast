@@ -14,5 +14,5 @@
     "pass": "your_app_password"
   },
   "email_to": ["recipient@email.com"],
-  "email_template": "templates/email.html"
+  "email_template": "assets/templates/email.html"
 }
