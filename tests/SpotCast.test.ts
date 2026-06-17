@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 //  SpotCast — Pipeline integration tests (Vitest)
 //
-//  Strategy: mock external I/O (Google API, SMTP, filesystem writes)
+//  Strategy: mock external I/O (HERE API, SMTP, filesystem writes)
 //  but keep the pipeline orchestration logic real and untouched.
 //  We verify behaviour at the pipeline level — not at the unit level.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -13,17 +13,17 @@ import { runPipeline } from '../src/SpotCast';
 
 vi.mock('../src/config/ConfigLoader', () => ({
   loadConfig: () => ({
-    language:        'en',
-    google_api_key:  'test-key',
-    categories:      ['Dentist'],
-    cities:          ['Berlin'],
-    countries:       ['Germany'],
-    results_per_run: 10,
-    schedule:        '0 8 * * *',
-    output_dir:      '/tmp/spotcast-test',
+    language:             'en',
+    here_api_key:         'test-here-key',
+    categories:           ['100-1000-0000'],
+    cities:               ['Berlin'],
+    countries:            ['Germany'],
+    search_radius_meters: 15000,
+    schedule:             '0 8 * * *',
+    output_dir:           '/tmp/spotcast-test',
     smtp: { host: 'smtp.test.com', port: 587, user: 'test@test.com', pass: 'pass' },
-    email_to:        ['recipient@test.com'],
-    email_template:  'templates/email.html',
+    email_to:             ['recipient@test.com'],
+    email_template:       'templates/email.html',
   }),
 }));
 
@@ -39,15 +39,14 @@ vi.mock('../src/config/ExcelConfigLoader', () => ({
   }),
 }));
 
-// i18n — minimal real-enough dictionaries
 vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs')>();
   return {
     ...actual,
     existsSync: (p: string) => {
-      if (String(p).includes('i18n')) return true;
+      if (String(p).includes('i18n'))       return true;
       if (String(p).includes('email.html')) return true;
-      if (String(p).includes('.xlsx')) return true;
+      if (String(p).includes('.xlsx'))      return true;
       return actual.existsSync(p);
     },
     readFileSync: (p: string, enc?: unknown) => {
@@ -63,14 +62,14 @@ vi.mock('fs', async (importOriginal) => {
   };
 });
 
-const mockFetchAll  = vi.fn();
-const mockFilter    = vi.fn();
-const mockExport    = vi.fn();
-const mockSend      = vi.fn();
-const mockMarkSeen  = vi.fn();
+const mockFetchAll = vi.fn();
+const mockFilter   = vi.fn();
+const mockExport   = vi.fn();
+const mockSend     = vi.fn();
+const mockMarkSeen = vi.fn();
 
-vi.mock('../src/fetcher/GoogleFetcher', () => ({
-  GoogleFetcher: vi.fn().mockImplementation(function () {
+vi.mock('../src/fetcher/HereFetcher', () => ({
+  HereFetcher: vi.fn().mockImplementation(function () {
     return { fetchAll: mockFetchAll };
   }),
 }));
@@ -96,7 +95,7 @@ vi.mock('../src/mailer/MailService', () => ({
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 const makeBusiness = (id: string) => ({
-  place_id: id, name: `Biz ${id}`, category: 'Dentist',
+  place_id: id, name: `Biz ${id}`, category: 'Bar',
   city: 'Berlin', country: 'Germany', address: 'Street 1',
 });
 
@@ -169,9 +168,9 @@ describe('runPipeline', () => {
   });
 
   it('propagates fetcher errors', async () => {
-    mockFetchAll.mockRejectedValue(new Error('API quota exceeded'));
+    mockFetchAll.mockRejectedValue(new Error('HERE API quota exceeded'));
 
-    await expect(runPipeline({ useJsonTransport: true })).rejects.toThrow('API quota exceeded');
+    await expect(runPipeline({ useJsonTransport: true })).rejects.toThrow('HERE API quota exceeded');
     expect(mockFilter).not.toHaveBeenCalled();
   });
 

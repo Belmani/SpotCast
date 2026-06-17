@@ -22,9 +22,9 @@ import logger from '../logger';
 
 // ── Styling constants ─────────────────────────────────────────────────────────
 
-const HEADER_BG    = 'FF2E75B6';
-const HEADER_FG    = 'FFFFFFFF';
-const ALT_ROW_BG   = 'FFEBF3FB';
+const HEADER_BG     = 'FF2E75B6';
+const HEADER_FG     = 'FFFFFFFF';
+const ALT_ROW_BG    = 'FFEBF3FB';
 const MIN_COL_WIDTH = 10;
 const COL_PADDING   = 2;
 
@@ -73,16 +73,16 @@ export class ExcelExporter {
   /**
    * Generates the .xlsx file and returns its absolute path.
    *
-   * @param businesses       - Filtered businesses to export
+   * @param businesses        - Filtered businesses to export
    * @param duplicatesSkipped - Count of duplicates filtered by DedupService
-   * @param i18n             - Active language dictionary
-   * @param fallback         - en.json — always passed as safety net
+   * @param i18n              - Active language dictionary
+   * @param fallback          - en.json — always passed as safety net
    */
   async export(
     businesses: Business[],
     duplicatesSkipped: number,
-    i18n: Record<string, string>,
-    fallback: Record<string, string>
+    i18n: Record<string, unknown>,
+    fallback: Record<string, unknown>
   ): Promise<string> {
     const tr = (key: string) => t(key, i18n, fallback);
 
@@ -110,23 +110,19 @@ export class ExcelExporter {
   ): void {
     const sheet = workbook.addWorksheet(tr('sheet_businesses'));
 
-    // Enabled columns in order from excel.json
     const activeCols = Object.entries(this.excelConfig.columns)
       .filter(([, enabled]) => enabled)
       .map(([key]) => key);
 
-    // Set column definitions
     sheet.columns = activeCols.map(colKey => ({
       key:   colKey,
       width: MIN_COL_WIDTH,
     }));
 
-    // Header row
     const headerValues = activeCols.map(colKey => tr(COL_TO_I18N_KEY[colKey] ?? colKey));
     const headerRow = sheet.addRow(headerValues);
     this.styleHeaderRow(headerRow, activeCols.length);
 
-    // Data rows
     businesses.forEach((business, index) => {
       const rowValues = activeCols.map(colKey => {
         const field = COL_TO_FIELD[colKey];
@@ -134,19 +130,13 @@ export class ExcelExporter {
       });
       const row = sheet.addRow(rowValues);
 
-      // Alternating row background
       if (index % 2 === 1) {
         row.eachCell(cell => {
-          cell.fill = {
-            type:    'pattern',
-            pattern: 'solid',
-            fgColor: { argb: ALT_ROW_BG },
-          };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ALT_ROW_BG } };
         });
       }
     });
 
-    // Auto-width: recalculate after all data is inserted
     sheet.columns.forEach((col, colIndex) => {
       const headerLen = headerValues[colIndex]?.length ?? 0;
       const maxDataLen = businesses.reduce((max, business) => {
@@ -170,13 +160,9 @@ export class ExcelExporter {
     const subjectTemplate = Handlebars.compile(tr('email_subject_template'));
     const bodyTemplate    = Handlebars.compile(tr('email_body_template'));
 
-    // Context columns + email columns
     const headers = [
-      tr('col_name'),
-      tr('col_category'),
-      tr('col_city'),
-      tr('col_email_subject'),
-      tr('col_email_body'),
+      tr('col_name'), tr('col_category'), tr('col_city'),
+      tr('col_email_subject'), tr('col_email_body'),
     ];
 
     sheet.columns = [
@@ -187,35 +173,20 @@ export class ExcelExporter {
       { key: 'email_body',    width: 60 },
     ];
 
-    // Header row
     const headerRow = sheet.addRow(headers);
     this.styleHeaderRow(headerRow, headers.length);
 
-    // Data rows
     businesses.forEach((business, index) => {
-      const subject = subjectTemplate(business);
-      const body    = bodyTemplate(business);
-
       const row = sheet.addRow([
-        business.name,
-        business.category,
-        business.city,
-        subject,
-        body,
+        business.name, business.category, business.city,
+        subjectTemplate(business), bodyTemplate(business),
       ]);
 
-      // wrapText on email_body cell (column index 5, 1-based)
-      const bodyCell = row.getCell(5);
-      bodyCell.alignment = { wrapText: true, vertical: 'top' };
+      row.getCell(5).alignment = { wrapText: true, vertical: 'top' };
 
-      // Alternating row background
       if (index % 2 === 1) {
         row.eachCell(cell => {
-          cell.fill = {
-            type:    'pattern',
-            pattern: 'solid',
-            fgColor: { argb: ALT_ROW_BG },
-          };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ALT_ROW_BG } };
         });
       }
     });
@@ -242,15 +213,12 @@ export class ExcelExporter {
       [tr('summary_run_date'),    runDate],
       [tr('summary_total_found'), totalFound],
       [tr('summary_duplicates'),  duplicatesSkipped],
-      [tr('summary_data_source'), 'google'],
+      [tr('summary_data_source'), 'here'],
       [tr('summary_language'),    this.config.language],
     ];
 
-    rows.forEach(([label, value]) => {
-      sheet.addRow([label, value]);
-    });
+    rows.forEach(([label, value]) => sheet.addRow([label, value]));
 
-    // Style label column — bold
     sheet.getColumn('label').eachCell(cell => {
       cell.font = { bold: true };
     });
@@ -265,9 +233,7 @@ export class ExcelExporter {
 
     for (let i = 1; i <= colCount; i++) {
       row.getCell(i).fill = {
-        type:    'pattern',
-        pattern: 'solid',
-        fgColor: { argb: HEADER_BG },
+        type: 'pattern', pattern: 'solid', fgColor: { argb: HEADER_BG },
       };
     }
   }
@@ -284,7 +250,6 @@ export class ExcelExporter {
     const filePath = path.join(outputDir, filename);
 
     await workbook.xlsx.writeFile(filePath);
-
     logger.info(`Excel file generated: ${filePath}`);
 
     return filePath;
