@@ -7,26 +7,23 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-// loadConfig is re-imported fresh per test via dynamic import
-// to avoid module-level caching issues with process.env
-
 const validConfig = {
-  language: 'en',
-  google_api_key: 'AIzaSy_test_key',
-  categories: ['Dentist', 'Gym'],
-  cities: ['Milan'],
-  countries: ['Italy'],
-  results_per_run: 10,
-  schedule: '0 8 * * *',
-  output_dir: 'results',
+  language:             'en',
+  here_api_key:         'test-here-key',
+  search_radius_meters: 15000,
+  categories:           ['Bar', 'Gym'],
+  cities:               ['Milan'],
+  countries:            ['Italy'],
+  schedule:             '0 8 * * *',
+  output_dir:           'results',
   smtp: {
     host: 'smtp.gmail.com',
     port: 587,
     user: 'test@test.com',
     pass: 'test_pass',
   },
-  email_to: ['dest@test.com'],
-  email_template: 'templates/email.html',
+  email_to:       ['dest@test.com'],
+  email_template: 'assets/templates/email.html',
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -39,7 +36,7 @@ function writeTempConfig(data: object): string {
 }
 
 function cleanEnv() {
-  delete process.env.GOOGLE_API_KEY;
+  delete process.env.HERE_API_KEY;
   delete process.env.SMTP_USER;
   delete process.env.SMTP_PASS;
 }
@@ -47,13 +44,8 @@ function cleanEnv() {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('ConfigLoader', () => {
-  beforeEach(() => {
-    cleanEnv();
-  });
-
-  afterEach(() => {
-    cleanEnv();
-  });
+  beforeEach(() => { cleanEnv(); });
+  afterEach(()  => { cleanEnv(); });
 
   // ── Valid config ────────────────────────────────────────────────────────────
 
@@ -62,7 +54,7 @@ describe('ConfigLoader', () => {
       const { loadConfig } = await import('../../src/config/ConfigLoader');
       const filePath = writeTempConfig(validConfig);
       const config = loadConfig(filePath);
-      expect(config.google_api_key).toBe('AIzaSy_test_key');
+      expect(config.here_api_key).toBe('test-here-key');
     });
 
     it('returns fully typed Config object', async () => {
@@ -70,43 +62,65 @@ describe('ConfigLoader', () => {
       const filePath = writeTempConfig(validConfig);
       const config = loadConfig(filePath);
       expect(config.language).toBe('en');
-      expect(config.categories).toEqual(['Dentist', 'Gym']);
+      expect(config.categories).toEqual(['Bar', 'Gym']);
       expect(config.smtp.port).toBe(587);
     });
 
-    it('applies default for results_per_run when missing', async () => {
+    it('applies default for search_radius_meters when missing', async () => {
       const { loadConfig } = await import('../../src/config/ConfigLoader');
-      const { results_per_run, ...withoutRPR } = validConfig;
-      const filePath = writeTempConfig(withoutRPR);
+      const { search_radius_meters, ...without } = validConfig;
+      const filePath = writeTempConfig(without);
       const config = loadConfig(filePath);
-      expect(config.results_per_run).toBe(10);
+      expect(config.search_radius_meters).toBe(15000);
     });
 
     it('applies default for language when missing', async () => {
       const { loadConfig } = await import('../../src/config/ConfigLoader');
-      const { language, ...withoutLang } = validConfig;
-      const filePath = writeTempConfig(withoutLang);
+      const { language, ...without } = validConfig;
+      const filePath = writeTempConfig(without);
       const config = loadConfig(filePath);
       expect(config.language).toBe('en');
     });
 
     it('applies default for schedule when missing', async () => {
       const { loadConfig } = await import('../../src/config/ConfigLoader');
-      const { schedule, ...withoutSchedule } = validConfig;
-      const filePath = writeTempConfig(withoutSchedule);
+      const { schedule, ...without } = validConfig;
+      const filePath = writeTempConfig(without);
       const config = loadConfig(filePath);
       expect(config.schedule).toBe('0 8 * * *');
+    });
+  });
+
+  // ── Legacy fields ───────────────────────────────────────────────────────────
+
+  describe('legacy field handling', () => {
+    it('ignores google_api_key with a warning', async () => {
+      const { loadConfig } = await import('../../src/config/ConfigLoader');
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      const filePath = writeTempConfig({ ...validConfig, google_api_key: 'old-key' });
+      loadConfig(filePath);
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('google_api_key'));
+      stderrSpy.mockRestore();
+    });
+
+    it('ignores results_per_run with a warning', async () => {
+      const { loadConfig } = await import('../../src/config/ConfigLoader');
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      const filePath = writeTempConfig({ ...validConfig, results_per_run: 10 });
+      loadConfig(filePath);
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('results_per_run'));
+      stderrSpy.mockRestore();
     });
   });
 
   // ── Missing required fields ─────────────────────────────────────────────────
 
   describe('missing required fields', () => {
-    it('exits on missing google_api_key', async () => {
+    it('exits on missing here_api_key', async () => {
       const { loadConfig } = await import('../../src/config/ConfigLoader');
       const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('process.exit'); });
-      const { google_api_key, ...withoutKey } = validConfig;
-      const filePath = writeTempConfig(withoutKey);
+      const { here_api_key, ...without } = validConfig;
+      const filePath = writeTempConfig(without);
       expect(() => loadConfig(filePath)).toThrow();
       mockExit.mockRestore();
     });
@@ -163,12 +177,12 @@ describe('ConfigLoader', () => {
   // ── Env var overrides ───────────────────────────────────────────────────────
 
   describe('environment variable overrides', () => {
-    it('overrides google_api_key with GOOGLE_API_KEY env var', async () => {
+    it('overrides here_api_key with HERE_API_KEY env var', async () => {
       const { loadConfig } = await import('../../src/config/ConfigLoader');
-      process.env.GOOGLE_API_KEY = 'env-api-key-override';
+      process.env.HERE_API_KEY = 'env-here-key-override';
       const filePath = writeTempConfig(validConfig);
       const config = loadConfig(filePath);
-      expect(config.google_api_key).toBe('env-api-key-override');
+      expect(config.here_api_key).toBe('env-here-key-override');
     });
 
     it('overrides smtp.user with SMTP_USER env var', async () => {
@@ -189,10 +203,10 @@ describe('ConfigLoader', () => {
 
     it('env vars take precedence over config file values', async () => {
       const { loadConfig } = await import('../../src/config/ConfigLoader');
-      process.env.GOOGLE_API_KEY = 'from-env';
-      const filePath = writeTempConfig({ ...validConfig, google_api_key: 'from-file' });
+      process.env.HERE_API_KEY = 'from-env';
+      const filePath = writeTempConfig({ ...validConfig, here_api_key: 'from-file' });
       const config = loadConfig(filePath);
-      expect(config.google_api_key).toBe('from-env');
+      expect(config.here_api_key).toBe('from-env');
     });
   });
 });

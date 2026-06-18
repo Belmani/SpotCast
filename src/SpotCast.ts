@@ -17,7 +17,7 @@ import path from 'path';
 import fs from 'fs';
 import { loadConfig } from './config/ConfigLoader';
 import { loadExcelConfig } from './config/ExcelConfigLoader';
-import { GoogleFetcher } from './fetcher/GoogleFetcher';
+import { HereFetcher } from './fetcher/HereFetcher';
 import { DedupService } from './dedup/DedupService';
 import { ExcelExporter } from './excel/ExcelExporter';
 import { MailService } from './mailer/MailService';
@@ -25,13 +25,13 @@ import logger from './logger';
 
 // ── i18n loader ───────────────────────────────────────────────────────────────
 
-function loadI18n(lang: string): Record<string, string> {
+function loadI18n(lang: string): Record<string, unknown> {
   const filePath = path.resolve(process.cwd(), `assets/i18n/${lang}.json`);
   if (!fs.existsSync(filePath)) {
     logger.warn(`i18n file not found for language "${lang}", falling back to "en"`);
     return loadI18n('en');
   }
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Record<string, string>;
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Record<string, unknown>;
 }
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
@@ -50,13 +50,13 @@ export async function runPipeline(options: {
   logger.info('SpotCast run started');
 
   // ── Step 1: Fetch ──────────────────────────────────────────────────────────
-  const fetcher  = new GoogleFetcher(config);
+  const fetcher  = new HereFetcher(config);
   const fetched  = await fetcher.fetchAll();
-  logger.info(`Fetched ${fetched.length} businesses from Google Places`);
+  logger.info(`Fetched ${fetched.length} businesses from HERE`);
 
   // ── Step 2: Dedup ──────────────────────────────────────────────────────────
-  const dedup            = new DedupService();
-  const fresh            = dedup.filter(fetched);
+  const dedup             = new DedupService();
+  const fresh             = dedup.filter(fetched);
   const duplicatesSkipped = fetched.length - fresh.length;
   logger.info(`After dedup: ${fresh.length} new businesses (${duplicatesSkipped} duplicates skipped)`);
 

@@ -1,10 +1,10 @@
 {
-  "language": "it",
-  "google_api_key": "YOUR_GOOGLE_PLACES_API_KEY",
-  "categories": ["Dentist", "Gym", "Lawyer"],
-  "cities": ["Milan", "Rome"],
-  "countries": ["Italy"],
-  "results_per_run": 10,
+  "language": "en",
+  "here_api_key": "YOUR_HERE_API_KEY",
+  "categories": ["Bar", "Gym", "Lawyer"],
+  "cities": ["Berlin", "Munich"],
+  "countries": ["Germany"],
+  "search_radius_meters": 15000,
   "schedule": "0 8 * * *",
   "output_dir": "results",
   "smtp": {
