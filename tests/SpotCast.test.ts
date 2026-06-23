@@ -16,8 +16,7 @@ vi.mock('../src/config/ConfigLoader', () => ({
     language:             'en',
     here_api_key:         'test-here-key',
     categories:           ['100-1000-0000'],
-    cities:               ['Berlin'],
-    countries:            ['Germany'],
+    cities_file:          'assets/cities/cities.json',
     search_radius_meters: 15000,
     schedule:             '0 8 * * *',
     output_dir:           '/tmp/spotcast-test',
@@ -25,6 +24,10 @@ vi.mock('../src/config/ConfigLoader', () => ({
     email_to:             ['recipient@test.com'],
     email_template:       'templates/email.html',
   }),
+}));
+
+vi.mock('../src/config/CitiesLoader', () => ({
+  loadCities: () => ['Berlin, Germany'],
 }));
 
 vi.mock('../src/config/ExcelConfigLoader', () => ({

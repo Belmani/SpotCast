@@ -1,11 +1,54 @@
+# ==========================================
+# DEPENDENCIES & LOCKFILES (pnpm)
+# ==========================================
 node_modules/
-dist/
 package-lock.json
+yarn.lock
+bun.lockb
 !pnpm-lock.yaml
-config.json
-seen_firms.json
-tracker.log
-results/
+
+# ==========================================
+# BUILD OUTPUT & TESTING (TypeScript / Vitest)
+# ==========================================
+dist/
 coverage/
+*.tsbuildinfo
+
+# ==========================================
+# LOCAL CONFIGURATIONS & SECRETS
+# ==========================================
 .env
+.env.local
+.env.*.local
+config.json
+
+# ==========================================
+# RUNTIME DATA & LOGS (Project Specific)
+# ==========================================
+tracker.log
+seen_firms.json
+results/
+assets/config/cities.json
+
+# ==========================================
+# OS SYSTEM FILES (macOS / Windows)
+# ==========================================
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon\r
+._*
+.Spotlight-V100
+.Trashes
+VolumeIcon.icns
+com.apple.timemachine.donotbackup
+Thumbs.db
+ehthumbs.db
+
+# ==========================================
+# IDE / EDITORS (VS Code / JetBrains)
+# ==========================================
+.vscode/
+!.vscode/extensions.json
+.history/
+.idea/

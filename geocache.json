@@ -1,0 +1,94 @@
+{
+  "Berlin, Germany": {
+    "lat": 52.51603,
+    "lng": 13.37699
+  },
+  "München, Germany": {
+    "lat": 48.13641,
+    "lng": 11.57754
+  },
+  "Hamburg, Germany": {
+    "lat": 53.55562,
+    "lng": 9.98745
+  },
+  "Frankfurt, Germany": {
+    "lat": 50.11208,
+    "lng": 8.68341
+  },
+  "Köln, Germany": {
+    "lat": 50.94257,
+    "lng": 6.95559
+  },
+  "Roma, Italy": {
+    "lat": 41.90325,
+    "lng": 12.49563
+  },
+  "Milano, Italy": {
+    "lat": 45.468,
+    "lng": 9.18185
+  },
+  "Torino, Italy": {
+    "lat": 45.06235,
+    "lng": 7.67993
+  },
+  "Napoli, Italy": {
+    "lat": 40.84014,
+    "lng": 14.25228
+  },
+  "Bologna, Italy": {
+    "lat": 44.50484,
+    "lng": 11.34507
+  },
+  "Paris, France": {
+    "lat": 48.85717,
+    "lng": 2.3414
+  },
+  "Lyon, France": {
+    "lat": 45.75917,
+    "lng": 4.82965
+  },
+  "Marseille, France": {
+    "lat": 43.29337,
+    "lng": 5.37133
+  },
+  "Toulouse, France": {
+    "lat": 43.60579,
+    "lng": 1.44863
+  },
+  "Bordeaux, France": {
+    "lat": 44.8367,
+    "lng": -0.58105
+  },
+  "Wien, Austria": {
+    "lat": 48.20263,
+    "lng": 16.36842
+  },
+  "Graz, Austria": {
+    "lat": 47.06861,
+    "lng": 15.44328
+  },
+  "Linz, Austria": {
+    "lat": 48.30422,
+    "lng": 14.28816
+  },
+  "Zürich, Switzerland": {
+    "lat": 47.37918,
+    "lng": 8.54236
+  },
+  "Genève, Switzerland": {
+    "lat": 46.20833,
+    "lng": 6.14275
+  },
+  "Basel, Switzerland": {
+    "lat": 47.5488,
+    "lng": 7.58781
+  },
+  "Lugano, Switzerland": {
+    "lat": 46.00297,
+    "lng": 8.9512
+  },
+  "New York, U.S.A.": {
+    "lat": 40.71453,
+    "lng": -74.00712
+  }
+}

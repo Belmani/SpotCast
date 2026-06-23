@@ -11,11 +11,11 @@
 | Runtime | Node.js | >=20.0.0 |
 | Language | TypeScript | ^5.5.0 |
 | Package manager | pnpm | 10.30.2 |
-| HTTP server | Express | ^4.21.0 |
-| Google Maps | `@googlemaps/google-maps-services-js` | ^3.4.2 |
+| Location data | HERE Browse + Geocoding API | — |
 | Excel generation | ExcelJS | ^4.4.0 |
 | Email sending | Nodemailer | ^6.9.0 |
 | Scheduler | node-cron | ^3.0.3 |
+| Template engine | Handlebars | ^4.7.0 |
 | Config validation | Zod | ^3.23.0 |
 | Logging | Winston | ^3.13.0 |
 | Testing | Vitest | ^2.1.0 |
@@ -28,117 +28,66 @@
 ```
 spotcast/
 │
-├── SpotCast.ts              ← entry point (CLI and daemon mode)
-│
-├── config.json              ← operational configuration (gitignored)
-├── config.example.json      ← template committed to repo
-├── excel.json               ← Excel export configuration (gitignored)
-├── excel.example.json       ← template committed to repo
-├── seen_firms.json          ← deduplication history (gitignored)
-├── tracker.log              ← execution log (gitignored)
-├── eslint.config.mjs        ← ESLint 9 flat config
-├── vitest.config.ts         ← Vitest configuration
-├── nodemon.json             ← nodemon hot-reload config
-│
-├── assets/
-│   └── i18n/                ← localisations — not code
-│       ├── en.json          ← reference language (universal fallback)
-│       ├── it.json
-│       ├── de.json
-│       ├── fr.json
-│       ├── es.json
-│       ├── pt.json
-│       ├── zh.json
-│       ├── ja.json
-│       ├── ar.json
-│       └── tr.json
+├── SpotCast.ts / dist/SpotCast.js   ← entry point
+├── config.json                       ← user config (gitignored)
+├── config.example.json               ← committed template
+├── geocache.json                     ← HERE geocoding cache (committed)
+├── seen_firms.json                   ← deduplication store (gitignored)
 │
 ├── src/
 │   ├── config/
-│   │   ├── ConfigLoader.ts       ← loads, validates and merges config.json + env vars
-│   │   └── ExcelConfigLoader.ts  ← loads and validates excel.json (M4)
+│   │   ├── ConfigLoader.ts           ← loads + validates config.json
+│   │   ├── CitiesLoader.ts           ← loads + validates cities.json
+│   │   └── ExcelConfigLoader.ts      ← loads + validates excel.json
 │   ├── fetcher/
-│   │   ├── Business.ts           ← Business, EnrichedBusiness, Metadata models
-│   │   └── GoogleFetcher.ts      ← Google Places API connector
+│   │   ├── Business.ts               ← Business model
+│   │   ├── HereFetcher.ts            ← HERE Browse API connector
+│   │   ├── HereCategoryMap.ts        ← label → HERE code map
+│   │   └── GoogleFetcher.ts          ← DEPRECATED
 │   ├── dedup/
-│   │   └── DedupService.ts       ← seen_firms.json management
+│   │   └── DedupService.ts           ← seen_firms.json management
 │   ├── excel/
-│   │   └── ExcelExporter.ts      ← .xlsx generation (M4)
+│   │   └── ExcelExporter.ts          ← .xlsx generation
 │   ├── mailer/
-│   │   └── MailService.ts        ← email sending (M5)
-│   ├── scheduler/
-│   │   └── Scheduler.ts          ← node-cron wrapper (M6)
-│   ├── api/
-│   │   └── RestServer.ts         ← REST API Express port 3847 (M7)
+│   │   └── MailService.ts            ← email sending
+│   ├── scheduler/                    ← M8 (REST API)
+│   ├── api/                          ← M8 (REST API)
+│   ├── logger.ts
+│   └── i18n/
+│       ├── translate.ts
+│       └── format.ts
+│
+├── assets/
+│   ├── cities/
+│   │   ├── cities.example.json       ← committed template
+│   │   └── cities.json               ← gitignored
 │   ├── i18n/
-│   │   └── translate.ts          ← t() utility with cascading fallback
-│   └── logger.ts                 ← shared Winston logger
+│   │   └── en.json / de.json / ...
+│   └── templates/
+│       └── email.html
 │
-├── templates/
-│   └── email.html               ← Handlebars email template
-│
-├── results/                     ← Excel output (gitignored)
 └── tests/
     ├── config/
-    │   ├── ConfigLoader.test.ts
-    │   └── ExcelConfigLoader.test.ts
     ├── fetcher/
-    │   └── GoogleFetcher.test.ts
     ├── dedup/
-    │   └── DedupService.test.ts
     ├── excel/
-    │   └── ExcelExporter.test.ts
-    └── i18n/
-        └── translate.test.ts
+    ├── mailer/
+    ├── i18n/
+    └── SpotCast.test.ts
 ```
-
-### Structure convention
-
-| Folder | Contents |
-|---|---|
-| `src/` | All TypeScript code — modules, classes, utilities |
-| `assets/` | Everything that is not code: localisations, static templates |
-| `tests/` | Vitest suites — mirrors the `src/` structure |
-| root | Project configuration files (`*.json`, `*.ts`, `*.mjs`) |
-
----
-
-## Configuration Files
-
-Each functional domain has its own dedicated file (DTR-029):
-
-| File | Domain | Committed |
-|---|---|---|
-| `config.json` | Operational configuration (API key, SMTP, schedule) | ❌ gitignored |
-| `config.example.json` | Template without secrets | ✅ |
-| `excel.json` | Excel export layout (columns, sheets) | ✅ |
-| `seen_firms.json` | Deduplication history | ❌ gitignored |
 
 ---
 
 ## Development Setup
 
 ```bash
-# Clone
 git clone https://github.com/Belmani/SpotCast.git
 cd SpotCast
-
-# Install pnpm if needed
 npm install -g pnpm@10.30.2
-
-# Install dependencies
 pnpm install
-
-# Copy configuration files
 cp config.example.json config.json
-cp excel.example.json excel.json
-# Fill in google_api_key and SMTP credentials in config.json
-
-# Start in development mode (hot-reload)
-pnpm dev
-
-# Production build
-pnpm build && pnpm start
+cp assets/cities/cities.example.json assets/cities/cities.json
+# Fill in here_api_key and SMTP credentials
 ```
 
 ---
@@ -149,7 +98,7 @@ pnpm build && pnpm start
 pnpm dev            # ts-node + nodemon hot-reload
 pnpm build          # compile TypeScript → dist/
 pnpm start          # run compiled build
-pnpm test           # Vitest in watch mode
+pnpm test           # Vitest watch mode
 pnpm test:run       # single run, no watch
 pnpm test:coverage  # coverage report in /coverage
 pnpm lint           # ESLint analysis
@@ -162,182 +111,100 @@ pnpm clean          # delete dist/
 
 ## Environment Variables
 
-Sensitive values override the corresponding fields in `config.json` when present:
-
 | Variable | Config field |
 |---|---|
-| `GOOGLE_API_KEY` | `google_api_key` |
+| `HERE_API_KEY` | `here_api_key` |
 | `SMTP_USER` | `smtp.user` |
 | `SMTP_PASS` | `smtp.pass` |
-
-```bash
-# macOS / Linux
-export GOOGLE_API_KEY="AIzaSy..."
-
-# Windows
-setx GOOGLE_API_KEY "AIzaSy..."
-```
 
 ---
 
 ## Core Modules
 
-### ConfigLoader (`src/config/ConfigLoader.ts`)
+### `ConfigLoader` (`src/config/ConfigLoader.ts`)
+Loads `config.json`, validates with Zod, applies env var overrides. Fatal errors go to `process.stderr` — no Winston dependency at boot stage.
 
-Loads `config.json`, validates with Zod schema, applies environment variable overrides. Fatal errors are written to `process.stderr` — no Winston dependency at boot time, to avoid circular imports.
+### `CitiesLoader` (`src/config/CitiesLoader.ts`)
+Loads `assets/cities/cities.json`. Returns flat `string[]` of `"city, country"` pairs. Validates with Zod — fatal on empty array or missing required fields.
 
-```typescript
-export type Config = z.infer<typeof ConfigSchema>;
-export function loadConfig(configPath = 'config.json'): Config
-```
+### `HereFetcher` (`src/fetcher/HereFetcher.ts`)
+HERE Browse API connector. Receives `city_list: string[]` of `"city, country"` pairs from `CitiesLoader`. Paginates automatically (100 per page, `offset`-based). Geocoding cached in `geocache.json`. Errors on single combination are logged and skipped — never crash the pipeline.
 
-### ExcelConfigLoader (`src/config/ExcelConfigLoader.ts`)
+### `HereCategoryMap` (`src/fetcher/HereCategoryMap.ts`)
+Maps English labels (`"Bar"`) to HERE category codes (`"100-1000-0000"`). Validation happens in `ConfigLoader` — `HereFetcher` receives only already-validated codes.
 
-Loads `excel.json`, validates with Zod. Protects mandatory fields (`name`, `category`, `city`, `address`) — throws a descriptive error if any of them are disabled.
+### `DedupService` (`src/dedup/DedupService.ts`)
+Tracks seen `place_id` values in `seen_firms.json`. `filter()` is read-only. `markSeen()` writes to disk — always called **after** email send, never before.
 
-```typescript
-export type ExcelConfig = z.infer<typeof ExcelConfigSchema>;
-export function loadExcelConfig(configPath = 'excel.json'): ExcelConfig
-```
+### `ExcelExporter` (`src/excel/ExcelExporter.ts`)
+Generates `.xlsx` with three sheets. Column layout driven by `excel.json`. All visible strings from i18n — no hardcoded text.
 
-### GoogleFetcher (`src/fetcher/GoogleFetcher.ts`)
-
-Wraps `@googlemaps/google-maps-services-js`. For each `(category × city)` combination in config, performs a `textSearch` query and maps results to the internal `Business` model. Never throws on API errors — returns partial results.
-
-```typescript
-fetchAll(): Promise<Business[]>
-fetchOne(category, city, limit): Promise<Business[]>
-```
-
-### Business model (`src/fetcher/Business.ts`)
-
-```typescript
-interface Business {
-  place_id: string;
-  name: string;
-  category: string;
-  city: string;
-  country: string;
-  address: string;
-  phone?: string;
-  website?: string;
-  rating?: number;
-  review_count?: number;
-  maps_url: string;
-  first_seen?: string;  // ISO — set by DedupService.markSeen() on first detection
-  last_seen?: string;   // ISO — updated by DedupService.markSeen() on every run
-}
-```
-
-### DedupService (`src/dedup/DedupService.ts`)
-
-Manages `seen_firms.json`. Path injectable via constructor for testability.
-
-```typescript
-constructor(filePath?: string)
-filter(businesses: Business[]): Business[]
-markSeen(businesses: Business[]): void   // call AFTER sending email
-reset(): void
-```
-
-### ExcelExporter (`src/excel/ExcelExporter.ts`)
-
-Generates the `.xlsx` file with three sheets. Receives already-loaded i18n dictionaries as parameters — does not load them itself.
-
-```typescript
-constructor(config: Config, excelConfig: ExcelConfig)
-async export(
-  businesses: Business[],
-  duplicatesSkipped: number,
-  i18n: Record<string, string>,
-  fallback: Record<string, string>
-): Promise<string>  // returns the absolute path of the generated file
-```
-
-### translate (`src/i18n/translate.ts`)
-
-Shared utility with three-level cascading fallback (DTR-027).
-
-```typescript
-// Fallback chain: i18n[key] → fallback[key] → key
-export function t(
-  key: string,
-  i18n: Record<string, string>,
-  fallback: Record<string, string>
-): string
-```
-
-### Logger (`src/logger.ts`)
-
-Shared Winston instance. Levels: `error/warn/info/debug`. File transport always active; console transport silenced in production.
+### `MailService` (`src/mailer/MailService.ts`)
+Nodemailer wrapper. Always sends when called — pipeline decides whether to call it. `useJsonTransport: true` for testing (no real SMTP).
 
 ---
 
-## i18n System
+## City Naming Convention
 
-Localisations live in `assets/i18n/` — clean separation between code (`src/`) and static resources (`assets/`). The translation logic lives in `src/i18n/translate.ts`.
+City names in `cities.json` must match the **official name on national cartography**. In multilingual countries, use the name in the language spoken in the geographic area:
 
-**10 launch languages:** `it`, `en`, `de`, `fr`, `es`, `pt`, `zh`, `ja`, `ar`, `tr`
+- `"München"` not `"Munich"`
+- `"Roma"` not `"Rome"`
+- `"Genève"` for French-speaking Geneva
+- `"Zürich"` for German-speaking Zurich
+- `"Lugano"` for Italian-speaking Ticino
 
-Loading the active language file is the caller's responsibility — `translate.ts` receives already-loaded dictionaries and does not touch the filesystem.
-
-To add a new language:
-1. Copy `assets/i18n/en.json` → `assets/i18n/{lang}.json`
-2. Translate all values (keep keys identical)
-3. Add the language code to the Zod enum in `ConfigLoader.ts`
-4. Open a PR
+HERE Geocoding returns more accurate results with official local names.
 
 ---
 
-## Testing Strategy (Vitest)
+## Pipeline Order
 
-**Coverage target: 80% minimum across all modules.**
+```
+1. ConfigLoader.loadConfig()
+2. CitiesLoader.loadCities(config.cities_file)
+3. HereFetcher.fetchAll()           → Business[]
+4. DedupService.filter()            → Business[] (new only)
+5. [if empty → stop, no email]
+6. ExcelExporter.export()           → path .xlsx
+7. MailService.send()               → email + attachment
+8. DedupService.markSeen()          → updates seen_firms.json
+```
+
+---
+
+## Testing Strategy
+
+**Coverage target: 80% minimum.**
 
 ```bash
-pnpm test:run                    # run all tests once
-pnpm test:coverage               # generate HTML coverage report
+pnpm test:run
+pnpm test:coverage
 ```
 
-**Philosophy:** real files in `os.tmpdir()` instead of filesystem mocks — mocking libraries hides real serialisation bugs. Applied to `DedupService` (JSON) and `ExcelExporter` (xlsx).
-
-**Constructor mocking note:** mocks of classes instantiated with `new` must use `function`, not arrow functions.
-
-**Async test note:** `it()` callbacks containing `await` must be declared `async`.
+**Key conventions:**
+- Real temp files in `os.tmpdir()` — no `fs` mocking (hides serialisation bugs)
+- `fetch` mocked globally in `HereFetcher` tests — no real HTTP
+- `useJsonTransport: true` in `MailService` tests — no real SMTP
+- Constructor mocks use `function`, not arrow functions (arrow functions cannot be constructors)
 
 ---
 
 ## Git Flow
 
 ```
-main          ← stable releases only — never commit directly
-develop       ← integration branch — all features merge here
-feature/xxx   ← one feature per branch, branched from develop
-release/xxx   ← release preparation, branched from develop
-hotfix/xxx    ← urgent fixes on main
+main      ← stable releases only
+develop   ← integration branch
+feature/* ← one feature per branch
+release/* ← release preparation
+hotfix/*  ← urgent fixes on main
 ```
 
 ```bash
 git flow feature start my-feature
-# ... develop ...
-git flow feature finish my-feature  # merges to develop, deletes branch
+git flow feature finish my-feature
 git push origin develop
-
-# Release
-git flow release start 0.2.0
-git flow release finish -m "v0.2.0 — description" 0.2.0
-git push origin main develop --tags
 ```
-
----
-
-## Dependency Versioning Policy
-
-Dependencies pinned to the latest **stable** major version. No updates to RC or beta releases. Before updating a major version, verify compatibility and document the decision in a new DTR.
-
-Current constraints:
-- Node.js `>=20.0.0`
-- Express `^4.x` (v5 still in RC)
-- Zod `^3.x` (v4 not yet production-stable)
 
 ---
 
@@ -347,9 +214,8 @@ Current constraints:
 - [ ] Coverage ≥ 80% (`pnpm test:coverage`)
 - [ ] No ESLint errors (`pnpm lint`)
 - [ ] No TypeScript errors (`pnpm typecheck`)
-- [ ] `config.example.json` updated if new fields were added
-- [ ] `excel.example.json` updated if new fields were added
-- [ ] `seen_firms.json` and `config.json` present in `.gitignore`
+- [ ] `config.example.json` updated if schema changed
+- [ ] `cities.example.json` updated if structure changed
 - [ ] `CHANGELOG.md` updated
 - [ ] Version bumped in `package.json`
-- [ ] Milestone summary added in `docs/`
+- [ ] Milestone summary added to `docs/`

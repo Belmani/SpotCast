@@ -24,9 +24,17 @@ import fs from 'fs';
 import path from 'path';
 import { Config } from '../config/ConfigLoader';
 import { Business } from '../fetcher/Business';
+import { HERE_CATEGORY_MAP } from '../fetcher/HereCategoryMap';
 import { t } from '../i18n/translate';
 import { formatDate, formatInteger } from '../i18n/format';
 import logger from '../logger';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Reverse map: HERE code → English label
+const CODE_TO_LABEL: Record<string, string> = Object.fromEntries(
+  Object.entries(HERE_CATEGORY_MAP).map(([label, code]) => [code, label])
+);
 
 // ── Options ───────────────────────────────────────────────────────────────────
 
@@ -71,11 +79,17 @@ export class MailService {
     }
 
     // ── Prepare template variables ─────────────────────────────────────────
-    const now        = new Date();
-    const date       = formatDate(now, i18n);
-    const count      = formatInteger(businesses.length, i18n);
-    const categories = this.config.categories.join(', ');
-    const cities     = this.config.cities.join(', ');
+    const now  = new Date();
+    const date = formatDate(now, i18n);
+    const count = formatInteger(businesses.length, i18n);
+
+    // Categories: resolve HERE codes back to English labels
+    const categories = this.config.categories
+      .map(code => CODE_TO_LABEL[code] ?? code)
+      .join(', ');
+
+    // Cities: unique list extracted from actual businesses found
+    const cities = [...new Set(businesses.map(b => b.city))].join(', ');
 
     const templateVars = { date, count, categories, cities };
 
@@ -129,7 +143,6 @@ export class MailService {
       const info = await transport.sendMail(mailOptions);
       logger.info(`Email sent to ${recipients.length} recipient(s)`);
 
-      // In test mode, return the captured message for assertion
       if (this.options.useJsonTransport) {
         return JSON.parse((info as nodemailer.SentMessageInfo & { message: string }).message);
       }

@@ -59,9 +59,30 @@ describe('ConfigLoader', () => {
       const { loadConfig } = await import('../../src/config/ConfigLoader');
       const config = loadConfig(writeTempConfig(validConfig));
       expect(config.language).toBe('en');
-      expect(config.categories).toEqual(['Bar', 'Gym']);
       expect(config.cities_file).toBe('assets/cities/cities.json');
       expect(config.smtp.port).toBe(587);
+    });
+
+    it('resolves category labels to HERE codes (DTR-043)', async () => {
+      const { loadConfig } = await import('../../src/config/ConfigLoader');
+      const config = loadConfig(writeTempConfig(validConfig));
+      // "Bar" → "100-1000-0000", "Gym" → "400-4100-0141"
+      expect(config.categories).toContain('100-1000-0000');
+      expect(config.categories).toContain('400-4100-0141');
+      // No raw labels in output
+      expect(config.categories).not.toContain('Bar');
+      expect(config.categories).not.toContain('Gym');
+    });
+
+    it('skips unknown categories with a warning', async () => {
+      const { loadConfig } = await import('../../src/config/ConfigLoader');
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      const filePath  = writeTempConfig({ ...validConfig, categories: ['Bar', 'UnknownCategory'] });
+      const config    = loadConfig(filePath);
+      // Bar resolved, UnknownCategory warned + skipped
+      expect(config.categories).toEqual(['100-1000-0000']);
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('UnknownCategory'));
+      stderrSpy.mockRestore();
     });
 
     it('applies default for search_radius_meters when missing', async () => {
@@ -86,6 +107,20 @@ describe('ConfigLoader', () => {
       const { loadConfig } = await import('../../src/config/ConfigLoader');
       const { email_template, ...without } = validConfig;
       expect(loadConfig(writeTempConfig(without)).email_template).toBe('assets/templates/email.html');
+    });
+  });
+
+  // ── Category validation ─────────────────────────────────────────────────────
+
+  describe('category validation', () => {
+    it('exits when all categories are unknown', async () => {
+      const { loadConfig } = await import('../../src/config/ConfigLoader');
+      const mockExit  = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('process.exit'); });
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      const filePath  = writeTempConfig({ ...validConfig, categories: ['NotACategory', 'AlsoWrong'] });
+      expect(() => loadConfig(filePath)).toThrow();
+      mockExit.mockRestore();
+      stderrSpy.mockRestore();
     });
   });
 

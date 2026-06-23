@@ -1,0 +1,22 @@
+[
+  {
+    "country": "Germany",
+    "cities": ["Berlin", "München", "Hamburg", "Frankfurt", "Köln"]
+  },
+  {
+    "country": "Italy",
+    "cities": ["Roma", "Milano", "Torino", "Napoli", "Bologna"]
+  },
+  {
+    "country": "France",
+    "cities": ["Paris", "Lyon", "Marseille", "Toulouse", "Bordeaux"]
+  },
+  {
+    "country": "Austria",
+    "cities": ["Wien", "Graz", "Linz"]
+  },
+  {
+    "country": "Switzerland",
+    "cities": ["Zürich", "Genève", "Basel", "Lugano"]
+  }
+]

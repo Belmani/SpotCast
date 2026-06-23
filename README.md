@@ -5,152 +5,156 @@
 ![pnpm](https://img.shields.io/badge/pnpm-10.30.2-orange)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 
-> Automated local business discovery — find new leads on Google Maps every morning, delivered straight to your inbox.
+> Automated local business discovery — finds new leads every morning via HERE Browse API, exports them to Excel and delivers the report straight to your inbox. No cloud, no dashboard. Just open your email.
 
 ---
 
 ## What is SpotCast?
 
-SpotCast is a lightweight, open-source tool that runs every morning on your computer and automatically:
+SpotCast runs every morning on your computer and automatically:
 
-1. Searches Google Maps for local businesses matching the categories and cities you configured
+1. Searches HERE Maps for local businesses matching your configured categories and cities
 2. Filters out companies you have already seen in previous sessions
 3. Exports the results to a formatted Excel file
 4. Sends the file to your email inbox — ready to use
-
-No cloud subscription. No dashboard to log into. Just a file in your inbox every morning.
 
 ---
 
 ## Requirements
 
-- **Node.js** v18 or higher — [download here](https://nodejs.org)
-- A **Google Maps API Key** (with Places API enabled) — [see the dedicated guide](./TUTORIAL_google_api_key.md)
-- An **SMTP email account** for sending (Gmail, Outlook, or any provider)
+- **Node.js** v20 or higher — [download here](https://nodejs.org)
+- A **HERE API Key** (free tier: 250,000 requests/month) — [see setup guide](./docs/TTR_SpotCast_M7_Here.md)
+- An **SMTP email account** for sending (Gmail with App Password recommended)
 - macOS, Windows, or Linux
 
 ---
 
 ## Installation
 
-> ⚠️ **M10+:** future versions of SpotCast will include a graphical installer with a guided wizard that automates all these steps. For now, follow the instructions below — it takes less than 5 minutes.
-
-**1. Download SpotCast**
-
-Go to the [Releases](https://github.com/Belmani/SpotCast/releases) page, download the latest version archive, and extract it to a folder of your choice.
-
-**2. Install Node.js** (if you don't have it already)
-
-Download it from [nodejs.org](https://nodejs.org) and install it normally. When done, verify the installation by opening a terminal and typing:
+**1. Clone or download SpotCast**
 
 ```bash
-node --version
+git clone https://github.com/Belmani/SpotCast.git
+cd SpotCast
 ```
 
-You should see a version number (e.g. `v20.11.0`). If you get an error, restart your computer and try again.
-
-**3. Install SpotCast dependencies**
-
-Open a terminal, navigate to the SpotCast folder, and type:
+**2. Install pnpm** (if not already installed)
 
 ```bash
-npm install
+npm install -g pnpm@10.30.2
 ```
 
-> 💡 **How to open a terminal:**
-> - **Windows:** right-click the SpotCast folder → "Open in Terminal" (or search "Command Prompt" in the Start menu)
-> - **Mac:** right-click the SpotCast folder → "New Terminal at Folder" (or open Terminal and type `cd ` followed by the folder path)
-> - **Linux:** right-click the folder → "Open Terminal"
+**3. Install dependencies**
 
-**4. Copy the configuration file**
+```bash
+pnpm install
+```
+
+**4. Configure SpotCast**
 
 ```bash
 cp config.example.json config.json
+cp assets/cities/cities.example.json assets/cities/cities.json
 ```
 
-On Windows, if the command above doesn't work:
-```
-copy config.example.json config.json
-```
-
-**5. Configure SpotCast**
-
-Open `config.json` with any text editor (Notepad on Windows, TextEdit on Mac) and fill in your details. See the [Configuration](#configuration) section below.
+Open `config.json` and fill in your HERE API key and SMTP credentials.
+Open `assets/cities/cities.json` and add the cities you want to monitor.
 
 ---
 
 ## Configuration
 
-Open `config.json` and edit the fields to match your needs:
+### `config.json`
 
 ```json
 {
   "language": "en",
-  "google_api_key": "YOUR_GOOGLE_PLACES_API_KEY",
-  "categories": ["Dentist", "Gym", "Lawyer", "Accountant", "Real Estate Agent"],
-  "cities": ["Milan", "Rome", "Turin"],
-  "countries": ["Italy"],
-  "results_per_run": 10,
+  "here_api_key": "YOUR_HERE_API_KEY",
+  "search_radius_meters": 15000,
+  "categories": ["Bar", "Gym", "Lawyer"],
+  "cities_file": "assets/cities/cities.json",
   "schedule": "0 8 * * *",
   "output_dir": "results",
   "smtp": {
     "host": "smtp.gmail.com",
     "port": 587,
-    "user": "your@email.com",
+    "user": "your@gmail.com",
     "pass": "your_app_password"
   },
   "email_to": ["recipient@email.com"],
-  "email_template": "templates/email.html"
+  "email_template": "assets/templates/email.html"
 }
 ```
 
-### Key fields
-
 | Field | Description | Example |
 |---|---|---|
-| `language` | Output language: `it`, `en`, `de`, and more | `"en"` |
-| `google_api_key` | Your Google Maps API key | `"AIzaSy..."` |
-| `categories` | Business types to search for | `["Dentist", "Gym"]` |
-| `cities` | Cities to search in | `["Milan", "Rome"]` |
-| `countries` | Country filter — prevents ambiguity | `["Italy"]` |
-| `results_per_run` | How many new businesses to find each day | `10` |
-| `schedule` | Automatic run schedule (cron format) | `"0 8 * * *"` = every day at 8:00 AM |
-| `output_dir` | Folder where Excel files are saved | `"results"` |
-| `smtp.host` | Email server for sending | `"smtp.gmail.com"` |
-| `smtp.port` | SMTP port | `587` |
-| `smtp.user` | Your email address | `"your@email.com"` |
-| `smtp.pass` | Email password (see Gmail note below) | `"xxxx xxxx xxxx"` |
-| `email_to` | Daily report recipients | `["you@email.com"]` |
+| `language` | Output language | `"en"`, `"it"`, `"de"` |
+| `here_api_key` | Your HERE API key | `"abc123..."` |
+| `search_radius_meters` | Search radius around each city center | `15000` |
+| `categories` | Business types to search for | `["Bar", "Gym"]` |
+| `cities_file` | Path to your cities configuration | `"assets/cities/cities.json"` |
+| `schedule` | Cron schedule | `"0 8 * * *"` = daily at 8:00 AM |
 
-> 📧 **Gmail note:** Gmail does not accept your regular account password. You need to generate an "App Password":
-> 1. Go to [myaccount.google.com/security](https://myaccount.google.com/security)
-> 2. Enable 2-Step Verification (if not already enabled)
-> 3. Search for "App passwords" and generate one for SpotCast
-> 4. Use that 16-character password in the `smtp.pass` field
+### `assets/cities/cities.json`
+
+```json
+[
+  {
+    "country": "Germany",
+    "cities": ["Berlin", "München", "Hamburg"]
+  },
+  {
+    "country": "Italy",
+    "cities": ["Roma", "Milano"]
+  }
+]
+```
+
+Use the **official local name** for each city — `"München"` not `"Munich"`, `"Roma"` not `"Rome"`.
+
+---
+
+## Supported Categories
+
+SpotCast uses English labels in `config.json` and maps them to HERE category codes internally.
+
+| Label | Category |
+|---|---|
+| `"Bar"` | Bar / Pub |
+| `"Restaurant"` | Restaurant |
+| `"Gym"` | Gym / Fitness |
+| `"Dentist"` | Dentist |
+| `"Lawyer"` | Law office |
+| `"Plumber"` | Plumber |
+| `"Locksmith"` | Locksmith |
+| `"Electrician"` | Electrician |
+| `"Pharmacy"` | Pharmacy |
+| `"Real Estate"` | Real estate agency |
+
+Full list in `src/fetcher/HereCategoryMap.ts`.
 
 ---
 
 ## Running SpotCast
 
-### Manual run — one time only
-
-Open a terminal in the SpotCast folder and type:
+### Manual run
 
 ```bash
-node SpotCast.js
+pnpm build
+node dist/SpotCast.js
 ```
 
-SpotCast will search for businesses, generate the Excel file, and send the email. The program closes when done.
+### Run immediately without waiting for schedule
+
+```bash
+node dist/SpotCast.js --daemon --now
+```
 
 ### Automatic daily execution
 
-To have SpotCast run every morning automatically, choose the method for your operating system:
+#### macOS — LaunchAgent
 
----
-
-#### 🍎 macOS — LaunchAgent
-
-Create the file `~/Library/LaunchAgents/com.spotcast.plist` with the following content (replace `/path/to/spotcast` with the actual folder path):
+Create `~/Library/LaunchAgents/com.spotcast.plist`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -158,51 +162,31 @@ Create the file `~/Library/LaunchAgents/com.spotcast.plist` with the following c
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>Label</key>
-  <string>com.spotcast</string>
+  <key>Label</key><string>com.spotcast</string>
   <key>ProgramArguments</key>
   <array>
     <string>/usr/local/bin/node</string>
-    <string>/path/to/spotcast/SpotCast.js</string>
+    <string>/path/to/spotcast/dist/SpotCast.js</string>
     <string>--daemon</string>
   </array>
-  <key>RunAtLoad</key>
-  <true/>
-  <key>KeepAlive</key>
-  <true/>
-  <key>StandardOutPath</key>
-  <string>/path/to/spotcast/tracker.log</string>
-  <key>StandardErrorPath</key>
-  <string>/path/to/spotcast/tracker.log</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
 </dict>
 </plist>
 ```
 
-Then activate it:
 ```bash
 launchctl load ~/Library/LaunchAgents/com.spotcast.plist
 ```
 
-SpotCast will start automatically at every login and run in the background.
+#### Windows — Task Scheduler
 
----
+1. Open Task Scheduler → Create Basic Task
+2. Trigger: When the computer starts
+3. Program: `C:\Program Files\nodejs\node.exe`
+4. Arguments: `C:\path\to\spotcast\dist\SpotCast.js --daemon`
 
-#### 🪟 Windows — Task Scheduler
-
-1. Open **Task Scheduler** (search "Task Scheduler" in the Start menu)
-2. Click **Create Basic Task...**
-3. Name: `SpotCast`, then **Next**
-4. Trigger: **When the computer starts**, then **Next**
-5. Action: **Start a program**, then **Next**
-6. Program: enter the path to `node.exe` (usually `C:\Program Files\nodejs\node.exe`)
-7. Arguments: `C:\path\to\spotcast\SpotCast.js --daemon`
-8. Click **Finish**
-
----
-
-#### 🐧 Linux — systemd
-
-Create the file `/etc/systemd/system/spotcast.service`:
+#### Linux — systemd
 
 ```ini
 [Unit]
@@ -213,30 +197,26 @@ After=network.target
 Type=simple
 User=YOUR_USERNAME
 WorkingDirectory=/path/to/spotcast
-ExecStart=/usr/bin/node SpotCast.js --daemon
+ExecStart=/usr/bin/node dist/SpotCast.js --daemon
 Restart=on-failure
-StandardOutput=append:/path/to/spotcast/tracker.log
-StandardError=append:/path/to/spotcast/tracker.log
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Then activate it:
 ```bash
-sudo systemctl enable spotcast
-sudo systemctl start spotcast
+sudo systemctl enable spotcast && sudo systemctl start spotcast
 ```
 
 ---
 
 ## Output
 
-Each run produces an Excel file saved in `output_dir`, with three sheets:
+Each run produces an Excel file in `output_dir` with three sheets:
 
-- **Businesses** — Name, category, city, address, phone, website, rating, review count
-- **Email Templates** — Pre-filled outreach emails for each business
-- **Run Summary** — Date, total found, duplicates skipped, data source
+- **Businesses** — name, category, city, address, phone, website, rating, review count
+- **Email Templates** — pre-filled outreach emails per business
+- **Run Summary** — date, total found, duplicates skipped, data source
 
 The file is automatically sent to all addresses in `email_to`.
 
@@ -244,68 +224,20 @@ The file is automatically sent to all addresses in `email_to`.
 
 ## Deduplication
 
-SpotCast keeps track of every business it has ever found. Businesses already in the history are never sent again. To reset the history and start fresh:
+SpotCast tracks every business it has ever found. Already-seen businesses are never sent again. To reset:
 
 ```bash
-node SpotCast.js --reset
+node dist/SpotCast.js --reset
 ```
 
 ---
 
 ## Supported Languages
 
-| Code | Language |
-|---|---|
-| `it` | Italian |
-| `en` | English |
-| `de` | German |
-| `fr` | French |
-| `es` | Spanish |
-| `pt` | Portuguese |
-| `zh` | Chinese (Simplified) |
-| `ja` | Japanese |
-| `ar` | Arabic |
-| `hi` | Hindi |
-
-To add a new language, copy `i18n/en.json`, translate the values, and set the language code in `config.json`.
-
----
-
-## REST API (for desktop application integration)
-
-SpotCast exposes a local REST API at `http://localhost:3847`:
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/status` | GET | Current status and last run info |
-| `/run` | POST | Trigger an immediate manual run |
-| `/results` | GET | Last run results as JSON |
-| `/config` | GET/PUT | Read or update configuration |
-
----
-
-## Troubleshooting
-
-**SpotCast runs but no email arrives**
-→ Check your SMTP credentials in `config.json`. If you use Gmail, make sure you are using an App Password (see Configuration section).
-
-**"google_api_key is required"**
-→ You forgot to add your Google API key in `config.json`. Follow the [dedicated guide](./TUTORIAL_google_api_key.md).
-
-**Excel file is generated but the `results` folder is missing**
-→ SpotCast creates it automatically. If you see a permissions error, make sure SpotCast is extracted to a folder where you have write access (e.g. Desktop or Documents).
-
-**"node: command not found"**
-→ Node.js is not installed or not in your system PATH. Reinstall it from [nodejs.org](https://nodejs.org) and restart your computer.
+`en`, `it`, `de`, `fr`, `es`, `pt`, `zh`, `ja`, `ar`, `tr`
 
 ---
 
 ## License
 
 MIT — free to use, modify, and distribute.
-
----
-
-## Credits
-
-Built with [Google Places API](https://developers.google.com/maps/documentation/places/web-service), [ExcelJS](https://github.com/exceljs/exceljs), [Nodemailer](https://nodemailer.com), and [node-cron](https://github.com/node-cron/node-cron).

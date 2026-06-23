@@ -1,10 +1,13 @@
 {
   "language": "en",
   "here_api_key": "YOUR_HERE_API_KEY",
-  "categories": ["Bar", "Gym", "Lawyer"],
-  "cities": ["Berlin", "Munich"],
-  "countries": ["Germany"],
   "search_radius_meters": 15000,
+  "categories": [
+    "Bar",
+    "Gym",
+    "Lawyer"
+  ],
+  "cities_file": "assets/cities/cities.json",
   "schedule": "0 8 * * *",
   "output_dir": "results",
   "smtp": {
@@ -13,6 +16,8 @@
     "user": "your@email.com",
     "pass": "your_app_password"
   },
-  "email_to": ["recipient@email.com"],
+  "email_to": [
+    "recipient@email.com"
+  ],
   "email_template": "assets/templates/email.html"
 }
